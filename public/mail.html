@@ -69,6 +69,18 @@
             font-size: 18px;
         }
 
+        /* 购买按钮特殊样式（侧边栏） */
+        .sidebar ul li .buy-link {
+            background-color: #2ecc71;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .sidebar ul li .buy-link:hover {
+            background-color: #27ae60;
+            transform: translateX(5px);
+        }
+
         /* 内容区域样式 */
         .content {
             flex-grow: 1;
@@ -524,30 +536,6 @@
             cursor: pointer;
             transition: border-color 0.3s ease;
         }
-
-        /* 仪表盘购买按钮样式 */
-        .dashboard-buy-btn {
-            padding: 10px 24px;
-            background-color: #3498db;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .dashboard-buy-btn i {
-            margin-right: 8px;
-        }
-
-        .dashboard-buy-btn:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
     </style>
     <!-- 引入Font Awesome图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -565,11 +553,13 @@
         <ul>
             <li><a href="#" data-target="dashboard" class="active"><i class="fas fa-tachometer-alt"></i>仪表盘</a></li>
             <li><a href="#" data-target="emails"><i class="fas fa-envelope"></i>邮箱管理</a></li>
+            <!-- 新增：侧边栏购买按钮（放在仪表盘和邮箱管理下方） -->
+            <li><a href="https://68n.cn/8to6G" target="_blank" class="buy-link"><i class="fas fa-shopping-cart"></i>前往购买邮箱账号</a></li>
         </ul>
     </div>
 
     <div class="content">
-        <!-- 仪表盘内容（含购买按钮） -->
+        <!-- 仪表盘内容（已移除原购买按钮） -->
         <div id="dashboard" class="content-section active">
             <h1>邮箱总数</h1>
             <div class="dashboard-cards">
@@ -577,12 +567,6 @@
                     <h3>账号数量</h3>
                     <p id="account-count">0</p>
                 </div>
-            </div>
-            <!-- 邮箱购买按钮 -->
-            <div style="margin-top: 20px; text-align: center;">
-                <button class="dashboard-buy-btn" onclick="window.open('https://68n.cn/8to6G', '_blank')">
-                    <i class="fas fa-shopping-cart"></i> 前往购买邮箱账号
-                </button>
             </div>
         </div>
 
@@ -702,6 +686,9 @@
         // 监听侧边栏链接的点击事件
         links.forEach(link => {
             link.addEventListener('click', (e) => {
+                // 购买链接直接跳转，不触发内容切换
+                if (link.classList.contains('buy-link')) return;
+
                 e.preventDefault(); // 阻止默认跳转行为
 
                 // 移除所有链接的选中状态
