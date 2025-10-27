@@ -69,15 +69,15 @@
             font-size: 18px;
         }
 
-        /* 购买按钮特殊样式（侧边栏） */
+        /* 购买按钮特殊样式（蓝色） */
         .sidebar ul li .buy-link {
-            background-color: #2ecc71;
+            background-color: #3498db; /* 蓝色主色 */
             color: #ffffff;
             font-weight: bold;
         }
 
         .sidebar ul li .buy-link:hover {
-            background-color: #27ae60;
+            background-color: #2980b9; /* 蓝色hover色 */
             transform: translateX(5px);
         }
 
@@ -553,13 +553,13 @@
         <ul>
             <li><a href="#" data-target="dashboard" class="active"><i class="fas fa-tachometer-alt"></i>仪表盘</a></li>
             <li><a href="#" data-target="emails"><i class="fas fa-envelope"></i>邮箱管理</a></li>
-            <!-- 新增：侧边栏购买按钮（放在仪表盘和邮箱管理下方） -->
-            <li><a href="https://68n.cn/8to6G" target="_blank" class="buy-link"><i class="fas fa-shopping-cart"></i>前往购买邮箱账号</a></li>
+            <!-- 修改：文案+蓝色按钮 -->
+            <li><a href="https://68n.cn/8to6G" target="_blank" class="buy-link"><i class="fas fa-shopping-cart"></i>购买长效微软邮箱</a></li>
         </ul>
     </div>
 
     <div class="content">
-        <!-- 仪表盘内容（已移除原购买按钮） -->
+        <!-- 仪表盘内容（账号数量滑动显示） -->
         <div id="dashboard" class="content-section active">
             <h1>邮箱总数</h1>
             <div class="dashboard-cards">
@@ -719,7 +719,7 @@
             renderTable(data);
             renderPagination(data.length);
             toggleNoData(data.length === 0);
-            updateDashboard(data); // 更新仪表盘数据
+            updateDashboard(data); // 更新仪表盘数据（滑动显示）
         }
 
         // 渲染表格
@@ -1204,11 +1204,27 @@
             modal.style.display = 'none';
         }
 
-        // 更新仪表盘数据
+        // 数字滑动（滚动）显示函数
+        function animateValue(id, start, end, duration) {
+            let startTimestamp = null;
+            const element = document.getElementById(id);
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // 更新仪表盘数据（使用滑动显示）
         function updateDashboard(data) {
             const accountCount = data.length;
-            // 更新统计卡片
-            document.getElementById('account-count').textContent = accountCount;
+            // 从0滚动到实际数量， duration=800ms（可调整速度）
+            animateValue('account-count', 0, accountCount, 800);
         }
 
         // 页面加载时加载数据
