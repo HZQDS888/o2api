@@ -218,6 +218,44 @@
             background-color: #2980b9;
         }
 
+        /* 搜索区域样式 */
+        .search-section {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-section input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        .search-section button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-section button:hover {
+            background-color: #2980b9;
+        }
+
+        .search-section button:nth-child(3) {
+            background-color: #95a5a6;
+            margin-left: 10px;
+        }
+
+        .search-section button:nth-child(3):hover {
+            background-color: #7f8c8d;
+        }
+
         /* 表格样式 */
         .email-table,
         .mail-table {
@@ -588,6 +626,14 @@
                     <button class="delete-all-btn" onclick="deleteAllEmails()">删除全部邮箱</button>
                 </div>
             </div>
+
+            <!-- 新增搜索区域 -->
+            <div class="search-section">
+                <input type="text" id="email-search" placeholder="输入邮箱关键词搜索...">
+                <button onclick="searchEmails()">搜索</button>
+                <button onclick="clearSearch()">清空</button>
+            </div>
+
             <table class="email-table" id="email-table">
                 <thead>
                     <tr>
@@ -668,6 +714,7 @@
         let mailData = [];
         let currentMailPage = 1; // 当前邮件列表的页码
         const mailItemsPerPage = 10; // 每页显示的邮件数量
+        let searchKeyword = ''; // 存储搜索关键词
 
         // 显示 Loading
         function showLoading() {
@@ -716,9 +763,13 @@
             if (password) {
                 document.getElementById('password').value = password;
             }
-            renderTable(data);
-            renderPagination(data.length);
-            toggleNoData(data.length === 0);
+            // 应用搜索过滤
+            const filteredData = searchKeyword ? data.filter(item => 
+                item.email.toLowerCase().includes(searchKeyword)
+            ) : data;
+            renderTable(filteredData);
+            renderPagination(filteredData.length);
+            toggleNoData(filteredData.length === 0);
             updateDashboard(data); // 更新仪表盘数据（滑动显示）
         }
 
@@ -774,6 +825,13 @@
             document.querySelector('#email-table tbody').addEventListener('change', function (event) {
                 if (event.target.type === 'checkbox') {
                     updateSelectedItems();
+                }
+            });
+
+            // 支持回车搜索
+            document.getElementById('email-search').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchEmails();
                 }
             });
         });
@@ -897,16 +955,22 @@
         function changePage(page) {
             currentPage = page;
             const data = JSON.parse(localStorage.getItem('emailData')) || [];
-            renderTable(data);
-            renderPagination(data.length);
+            const filteredData = searchKeyword ? data.filter(item => 
+                item.email.toLowerCase().includes(searchKeyword)
+            ) : data;
+            renderTable(filteredData);
+            renderPagination(filteredData.length);
         }
 
         function changeItemsPerPage(value) {
             itemsPerPage = parseInt(value, 10);
             currentPage = 1; // 切换每页显示条数时重置到第一页
             const data = JSON.parse(localStorage.getItem('emailData')) || [];
-            renderTable(data);
-            renderPagination(data.length);
+            const filteredData = searchKeyword ? data.filter(item => 
+                item.email.toLowerCase().includes(searchKeyword)
+            ) : data;
+            renderTable(filteredData);
+            renderPagination(filteredData.length);
         }
 
         // 显示/隐藏无数据提示
@@ -918,7 +982,10 @@
         // 查看邮件（收件箱）
         function viewInbox(index) {
             const data = JSON.parse(localStorage.getItem('emailData')) || [];
-            const item = data[index];
+            const filteredData = searchKeyword ? data.filter(item => 
+                item.email.toLowerCase().includes(searchKeyword)
+            ) : data;
+            const item = filteredData[index];
 
             // 重置邮件分页为第一页
             currentMailPage = 1;
@@ -930,7 +997,10 @@
         // 查看邮件（垃圾箱）
         function viewJunk(index) {
             const data = JSON.parse(localStorage.getItem('emailData')) || [];
-            const item = data[index];
+            const filteredData = searchKeyword ? data.filter(item => 
+                item.email.toLowerCase().includes(searchKeyword)
+            ) : data;
+            const item = filteredData[index];
 
             // 重置邮件分页为第一页
             currentMailPage = 1;
@@ -1095,10 +1165,18 @@
         // 删除单个邮箱
         function deleteEmail(index) {
             const data = JSON.parse(localStorage.getItem('emailData')) || [];
-            data.splice(index, 1); // 删除指定项
-            localStorage.setItem('emailData', JSON.stringify(data)); // 更新 localStorage
-            loadData(); // 重新加载数据
-            showModal('删除成功', '邮箱已成功删除。');
+            const filteredData = searchKeyword ? data.filter(item => 
+                item.email.toLowerCase().includes(searchKeyword)
+            ) : data;
+            
+            // 找到原始数据中的索引
+            const originalIndex = data.findIndex(item => item.email === filteredData[index].email);
+            if (originalIndex !== -1) {
+                data.splice(originalIndex, 1); // 删除指定项
+                localStorage.setItem('emailData', JSON.stringify(data)); // 更新 localStorage
+                loadData(); // 重新加载数据
+                showModal('删除成功', '邮箱已成功删除。');
+            }
         }
 
         // 导入邮箱功能
@@ -1225,6 +1303,30 @@
             const accountCount = data.length;
             // 从0滚动到实际数量， duration=800ms（可调整速度）
             animateValue('account-count', 0, accountCount, 800);
+        }
+
+        // 搜索邮箱
+        function searchEmails() {
+            searchKeyword = document.getElementById('email-search').value.trim().toLowerCase();
+            currentPage = 1; // 搜索后重置到第一页
+            const data = JSON.parse(localStorage.getItem('emailData')) || [];
+            const filteredData = searchKeyword ? data.filter(item => 
+                item.email.toLowerCase().includes(searchKeyword)
+            ) : data;
+            renderTable(filteredData);
+            renderPagination(filteredData.length);
+            toggleNoData(filteredData.length === 0);
+        }
+
+        // 清空搜索
+        function clearSearch() {
+            document.getElementById('email-search').value = '';
+            searchKeyword = '';
+            currentPage = 1;
+            const data = JSON.parse(localStorage.getItem('emailData')) || [];
+            renderTable(data);
+            renderPagination(data.length);
+            toggleNoData(data.length === 0);
         }
 
         // 页面加载时加载数据
