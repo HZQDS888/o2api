@@ -557,7 +557,7 @@
                     <input type="file" id="file-input" accept=".txt">
                 </div>
                 <div class="delimiter-input">
-                    <input type="password" id="password" placeholder="输入验证密码 如未设置则留空" oninput="setPassword()">
+                    <input type="password" id="password" placeholder="输入验证密码 请联系小黑" oninput="setPassword()">
                     <input type="text" id="delimiter" placeholder="输入分隔符（如 ----）">
                     <button onclick="importEmails()">导入邮箱</button>
                     <button class="delete-btn" onclick="batchDelete()">批量删除</button>
@@ -958,7 +958,7 @@
                 .catch(error => {
 
                     if (error.status == 401) {
-                        showModal('提示', '为了防止滥用，已增加密码验证功能。如需使用，请联系管理员获取密码或自行搭建服务。');
+                        showModal('提示', '为了防止滥用，已加密码验证。如需使用请购买，请联系管理员小黑QQ：113575320。');
                         return
                     }
 
