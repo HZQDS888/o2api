@@ -855,9 +855,9 @@
             <li><a href="#" data-target="emails"><i class="fas fa-envelope"></i>邮箱管理</a></li>
             <!-- 购买按钮及新增的蓝色按钮 -->
             <li><a href="https://68n.cn/8to6G" target="_blank" class="buy-link"><i class="fas fa-shopping-cart"></i>购买长效微软邮箱</a></li>
-            <li><a href="https://link3.cc/hzqds888" target="_blank" class="buy-link"><i class="fas fa-th-large"></i>更多软件工具合集</a></li>
+            <li><a href="https://link3.cc/hzqds888" target="_blank" class="buy-link"><i class="fas fa-th-large"></i>更多软件工具</a></li>
             <!-- 新增：api调用文档教程按钮 -->
-            <li><a href="https://xiaoheifk.cn/api.html" target="_blank" class="buy-link"><i class="fas fa-file-alt"></i>（api）调用文档教程</a></li>
+            <li><a href="https://xiaoheifk.cn/api.html" target="_blank" class="buy-link"><i class="fas fa-file-alt"></i>api调用文档教程</a></li>
             <li><a href="https://www.qianxun1688.com/rights-shop/1CDFE3FC" target="_blank" class="buy-link"><i class="fas fa-ticket-alt"></i>全网会员5折优惠网</a></li>
         </ul>
     </div>
@@ -1049,19 +1049,72 @@
         let passwordVisible = false; // 密码显示状态
         let confirmCallback = null; // 确认框回调函数
 
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化侧边栏链接事件
+            initSidebarLinks();
+            // 初始化快捷入口跳转事件
+            initQuickActions();
+            // 初始化全选功能
+            initSelectAll();
+            // 初始化拖拽上传
+            initDragUpload();
+            // 初始化搜索框回车事件
+            initSearchEnter();
+            // 加载数据
+            loadData();
+            // 初始化窗口大小监听
+            initWindowResize();
+            // 初始化开发者信息输出
+            initDevInfo();
+        });
+
+        // 初始化侧边栏链接事件
+        function initSidebarLinks() {
+            document.querySelectorAll('.sidebar ul li a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // 外部链接（带target="_blank"）直接跳转
+                    if (this.target === '_blank') return;
+                    
+                    e.preventDefault();
+                    // 移除所有链接选中状态
+                    document.querySelectorAll('.sidebar ul li a').forEach(l => l.classList.remove('active'));
+                    // 激活当前链接
+                    this.classList.add('active');
+                    // 获取目标ID并切换内容区域
+                    const targetId = this.getAttribute('data-target');
+                    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) targetSection.classList.add('active');
+                    
+                    // 移动端自动收起菜单
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+                });
+            });
+        }
+
+        // 初始化快捷入口跳转事件
+        function initQuickActions() {
+            const emailQuickLink = document.querySelector('.quick-actions a[data-target="emails"]');
+            if (emailQuickLink) {
+                emailQuickLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // 切换侧边栏选中状态
+                    document.querySelectorAll('.sidebar ul li a').forEach(l => l.classList.remove('active'));
+                    document.querySelector('.sidebar ul li a[data-target="emails"]').classList.add('active');
+                    // 切换内容区域
+                    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+                    document.getElementById('emails').classList.add('active');
+                });
+            }
+        }
+
         // 移动端菜单切换
         document.getElementById('menu-toggle').addEventListener('click', function() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('active');
-        });
-
-        // 点击侧边栏链接后在移动端自动收起菜单
-        document.querySelectorAll('.sidebar ul li a:not(.buy-link)').forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    document.getElementById('sidebar').classList.remove('active');
-                }
-            });
         });
 
         // 加密函数
@@ -1089,32 +1142,6 @@
         function hideLoading() {
             document.getElementById('loading-overlay').style.display = 'none';
         }
-
-        // 获取所有侧边栏链接和内容区域
-        const links = document.querySelectorAll('.sidebar ul li a');
-        const contentSections = document.querySelectorAll('.content-section');
-
-        // 监听侧边栏链接的点击事件
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                // 购买链接直接跳转，不触发内容切换
-                if (link.classList.contains('buy-link')) return;
-
-                e.preventDefault(); // 阻止默认跳转行为
-
-                // 移除所有链接的选中状态
-                links.forEach(l => l.classList.remove('active'));
-                // 为当前点击的链接添加选中状态
-                link.classList.add('active');
-
-                // 获取目标内容区域的ID
-                const targetId = link.getAttribute('data-target');
-                // 隐藏所有内容区域
-                contentSections.forEach(section => section.classList.remove('active'));
-                // 显示目标内容区域
-                document.getElementById(targetId).classList.add('active');
-            });
-        });
 
         // 分页相关变量
         let currentPage = 1;
@@ -1194,7 +1221,7 @@
                 refreshTokenCell.textContent = item.refreshToken;
                 row.appendChild(refreshTokenCell);
 
-                // 操作列（新增编辑按钮）
+                // 操作列
                 const actionsCell = document.createElement('td');
                 actionsCell.className = 'actions';
                 actionsCell.innerHTML = `
@@ -1210,7 +1237,7 @@
         }
 
         // 全选/全不选功能
-        document.addEventListener('DOMContentLoaded', function () {
+        function initSelectAll() {
             document.getElementById('select-all').addEventListener('change', function () {
                 const checkboxes = document.querySelectorAll('#email-table tbody input[type="checkbox"]');
                 checkboxes.forEach(checkbox => {
@@ -1225,24 +1252,7 @@
                     updateSelectedItems();
                 }
             });
-
-            // 支持回车搜索
-            document.getElementById('email-search').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    searchEmails();
-                }
-            });
-
-            // 邮件搜索框支持回车
-            document.getElementById('mail-search').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    searchMails();
-                }
-            });
-
-            // 页面加载时加载数据
-            loadData();
-        });
+        }
 
         // 存储选中的项
         let selectedItems = [];
@@ -1290,7 +1300,7 @@
                 '此操作将删除所有邮箱数据，且无法恢复。是否确认删除？',
                 function() {
                     localStorage.removeItem('emailData'); // 清空所有邮箱数据
-                    loadData(); // 重新加载数据（表格清空，仪表盘更新）
+                    loadData(); // 重新加载数据
                     showModal('删除成功', '所有邮箱数据已全部删除！');
                 }
             );
@@ -1433,7 +1443,7 @@
             loadMailList(item.refreshToken, item.clientId, item.email, 'Junk');
         }
 
-        // 加载邮件列表（新增原始数据存储）
+        // 加载邮件列表
         function loadMailList(refreshToken, clientId, email, mailbox) {
             showLoading(); // 显示 Loading
             const encryptedPassword = localStorage.getItem('password') || '';
@@ -1446,56 +1456,35 @@
 
             fetch(apiUrl)
                 .then(response => {
-                    // 检查响应状态码
                     if (!response.ok) {
-                        // 如果状态码不是 2xx，抛出错误
                         if (response.status === 500) {
-                            // 如果是 500 错误，尝试解析返回的 JSON 数据
                             return response.json().then(errorData => {
-                                // 如果返回的错误信息是 "Nothing to fetch"，则设置 mailData 为空
                                 if (errorData.error === "Nothing to fetch") {
-                                    // 更新全局邮件数据
                                     mailData = [];
                                     originalMailData = [];
-                                    // 隐藏其他内容区域
-                                    document.querySelectorAll('.content-section').forEach(section => {
-                                        section.classList.remove('active');
-                                    });
-                                    // 显示邮件列表区域
+                                    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
                                     document.getElementById('mail-list').classList.add('active');
-                                    // 渲染邮件列表
                                     renderMailTable(mailData);
-                                    // 返回一个 resolved 的 Promise，避免进入 catch 块
                                     return Promise.resolve();
                                 } else {
-                                    // 其他 500 错误
                                     throw new Error('服务器内部错误，请稍后重试。');
                                 }
                             });
                         } else {
-                            // 其他非 500 错误
                             if (response.status === 401) {
                                 throw response;
                             }
-                            // 其他非 500 错误
                             throw new Error(`请求失败，状态码：${response.status}`);
                         }
                     }
-                    return response.json(); // 解析 JSON 数据
+                    return response.json();
                 })
                 .then(data => {
-                    // 如果 data 存在（即不是 "Nothing to fetch" 的情况），更新全局邮件数据
                     if (data) {
                         mailData = data;
-                        originalMailData = [...data]; // 存储原始数据用于搜索
-
-                        // 隐藏其他内容区域
-                        document.querySelectorAll('.content-section').forEach(section => {
-                            section.classList.remove('active');
-                        });
-                        // 显示邮件列表区域
+                        originalMailData = [...data];
+                        document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
                         document.getElementById('mail-list').classList.add('active');
-                        // 渲染邮件列表
                         renderMailTable(mailData);
                     }
                 })
@@ -1504,8 +1493,6 @@
                         showModal('提示', '为了防止滥用，已加密码验证。如需使用请购买，请联系管理员小黑QQ：113575320。');
                         return;
                     }
-
-                    // 根据错误类型显示不同的提示
                     if (error.message.includes('服务器内部错误')) {
                         showModal('错误', '服务器内部错误，请稍后重试。');
                     } else {
@@ -1513,7 +1500,7 @@
                     }
                 })
                 .finally(() => {
-                    hideLoading(); // 隐藏 Loading
+                    hideLoading();
                 });
         }
 
@@ -1545,7 +1532,6 @@
                 mailTableBody.appendChild(row);
             });
 
-            // 渲染邮件分页
             renderMailPagination(data.length);
         }
 
@@ -1569,7 +1555,6 @@
         // 切换邮件分页
         function changeMailPage(page) {
             currentMailPage = page;
-            // 根据搜索关键词决定渲染数据
             const renderData = mailSearchKeyword 
                 ? originalMailData.filter(item => 
                     item.send.toLowerCase().includes(mailSearchKeyword) || 
@@ -1582,7 +1567,7 @@
         // 邮件搜索功能
         function searchMails() {
             mailSearchKeyword = document.getElementById('mail-search').value.trim().toLowerCase();
-            currentMailPage = 1; // 搜索后重置到第一页
+            currentMailPage = 1;
             const filteredData = originalMailData.filter(item => 
                 item.send.toLowerCase().includes(mailSearchKeyword) || 
                 item.subject.toLowerCase().includes(mailSearchKeyword)
@@ -1600,7 +1585,6 @@
 
         // 查看邮件详情
         function viewMail(index) {
-            // 根据搜索状态获取正确的邮件数据
             const targetData = mailSearchKeyword 
                 ? originalMailData.filter(item => 
                     item.send.toLowerCase().includes(mailSearchKeyword) || 
@@ -1643,18 +1627,17 @@
                 item.email.toLowerCase().includes(searchKeyword)
             ) : data;
             
-            // 找到原始数据中的索引
             const originalIndex = data.findIndex(item => item.email === filteredData[index].email);
             if (originalIndex !== -1) {
                 const deletedEmail = data[originalIndex].email;
-                data.splice(originalIndex, 1); // 删除指定项
-                localStorage.setItem('emailData', encryptData(data)); // 加密存储
-                loadData(); // 重新加载数据
+                data.splice(originalIndex, 1);
+                localStorage.setItem('emailData', encryptData(data));
+                loadData();
                 showModal('删除成功', `邮箱 ${deletedEmail} 已成功删除`);
             }
         }
 
-        // 导入邮箱功能（去重+加密存储）
+        // 导入邮箱功能
         function importEmails() {
             const delimiter = document.getElementById('delimiter').value.trim();
             const fileInput = document.getElementById('file-input');
@@ -1675,7 +1658,7 @@
             reader.onload = function (e) {
                 showLoading();
                 const content = e.target.result;
-                const lines = content.split('\n').filter(line => line.trim() !== ''); // 过滤空行
+                const lines = content.split('\n').filter(line => line.trim() !== '');
                 const encryptedData = localStorage.getItem('emailData') || '';
                 let data = encryptedData ? decryptData(encryptedData) || [] : [];
                 const existingEmails = new Set(data.map(item => item.email.toLowerCase()));
@@ -1683,10 +1666,9 @@
                 let duplicateCount = 0;
                 let errorCount = 0;
 
-                // 解析每一行
                 lines.forEach(line => {
-                    const fields = line.split(delimiter).map(field => field.trim()); // 分割并去空格
-                    if (fields.length >= 4) { // 确保有 4 个字段
+                    const fields = line.split(delimiter).map(field => field.trim());
+                    if (fields.length >= 4) {
                         const email = fields[0].trim();
                         const password = fields[1].trim();
                         const clientId = fields[2].trim();
@@ -1707,19 +1689,15 @@
                     }
                 });
 
-                // 保存到 localStorage（加密）
                 localStorage.setItem('emailData', encryptData(data));
-                // 重新加载数据
                 loadData();
                 hideLoading();
 
-                // 显示详细导入结果
                 showModal(
                     '导入完成',
                     `成功导入：${successCount} 条<br>重复跳过：${duplicateCount} 条<br>格式错误：${errorCount} 条`
                 );
 
-                // 清空文件选择
                 fileInput.value = '';
                 document.getElementById('file-info').textContent = '';
             };
@@ -1728,44 +1706,41 @@
         }
 
         // 拖拽文件上传逻辑
-        const uploadBox = document.getElementById('upload-box');
-        const fileInput = document.getElementById('file-input');
-        const fileInfo = document.getElementById('file-info');
+        function initDragUpload() {
+            const uploadBox = document.getElementById('upload-box');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
 
-        // 点击上传区域触发文件选择
-        uploadBox.addEventListener('click', () => {
-            fileInput.click();
-        });
+            uploadBox.addEventListener('click', () => {
+                fileInput.click();
+            });
 
-        // 文件选择后显示文件名
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                fileInfo.textContent = `已选择文件：${fileInput.files[0].name}`;
-            }
-        });
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileInfo.textContent = `已选择文件：${fileInput.files[0].name}`;
+                }
+            });
 
-        // 拖拽文件进入区域
-        uploadBox.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadBox.classList.add('dragover');
-        });
+            uploadBox.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadBox.classList.add('dragover');
+            });
 
-        // 拖拽文件离开区域
-        uploadBox.addEventListener('dragleave', () => {
-            uploadBox.classList.remove('dragover');
-        });
+            uploadBox.addEventListener('dragleave', () => {
+                uploadBox.classList.remove('dragover');
+            });
 
-        // 拖拽文件释放
-        uploadBox.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadBox.classList.remove('dragover');
+            uploadBox.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadBox.classList.remove('dragover');
 
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files; // 将拖拽的文件赋值给 input
-                fileInfo.textContent = `已选择文件：${files[0].name}`;
-            }
-        });
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    fileInfo.textContent = `已选择文件：${files[0].name}`;
+                }
+            });
+        }
 
         // 模态框功能
         const modal = document.getElementById('modal');
@@ -1869,7 +1844,6 @@
                 return;
             }
 
-            // 转换为JSON字符串
             const jsonStr = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -1902,12 +1876,11 @@
                 toggleBtns[index].innerHTML = passwordVisible ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
             });
 
-            // 更新表头按钮
             const headerBtn = document.querySelector('th .password-toggle i');
             headerBtn.className = passwordVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
         }
 
-        // 数字滑动（滚动）显示函数
+        // 数字滑动显示函数
         function animateValue(id, start, end, duration) {
             let startTimestamp = null;
             const element = document.getElementById(id);
@@ -1923,17 +1896,16 @@
             window.requestAnimationFrame(step);
         }
 
-        // 更新仪表盘数据（使用滑动显示）
+        // 更新仪表盘数据
         function updateDashboard(data) {
             const accountCount = data.length;
-            // 从0滚动到实际数量， duration=800ms（可调整速度）
             animateValue('account-count', 0, accountCount, 800);
         }
 
         // 搜索邮箱
         function searchEmails() {
             searchKeyword = document.getElementById('email-search').value.trim().toLowerCase();
-            currentPage = 1; // 搜索后重置到第一页
+            currentPage = 1;
             const encryptedData = localStorage.getItem('emailData') || '';
             let data = encryptedData ? decryptData(encryptedData) || [] : [];
             const filteredData = searchKeyword ? data.filter(item => 
@@ -1966,6 +1938,33 @@
             }
         }
 
+        // 初始化搜索框回车事件
+        function initSearchEnter() {
+            // 邮箱搜索框回车
+            document.getElementById('email-search').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchEmails();
+                }
+            });
+
+            // 邮件搜索框回车
+            document.getElementById('mail-search').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchMails();
+                }
+            });
+        }
+
+        // 初始化窗口大小监听
+        function initWindowResize() {
+            window.addEventListener('resize', function() {
+                const sidebar = document.getElementById('sidebar');
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        }
+
         // 点击模态框外部关闭
         window.addEventListener('click', (e) => {
             if (e.target === modal) closeModal();
@@ -1974,20 +1973,13 @@
             if (e.target === document.getElementById('mail-modal')) closeMailModal();
         });
 
-        // 窗口大小变化时处理
-        window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('sidebar');
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('active'); // 大屏幕自动收起菜单
-            }
-        });
-
-        document.addEventListener("DOMContentLoaded", function () {
+        // 初始化开发者信息输出
+        function initDevInfo() {
             console.log('%c感谢您使用本项目！', 'color: #999; font-size: 11px; margin-top: 5px; margin-bottom: 5px;');
             console.log('%c作者: HChaohui', 'color: #3498db; font-size: 12px; font-weight: bold; margin-bottom: 5px;');
             console.log('%c开源地址: %chttps://github.com/HChaoHui/msOauth2api', 'color: #3498db; font-size: 12px; font-weight: bold;', 'color: #3498db; font-size: 12px; text-decoration: underline; cursor: pointer;');
             console.log('%c如需使用或修改本项目，请保留作者信息。感谢您的理解和支持！', 'color: #999; font-size: 11px; margin-top: 5px; margin-bottom: 5px;');
-        });
+        }
     </script>
 
 </body>
