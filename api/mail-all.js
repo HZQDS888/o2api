@@ -1,8 +1,8 @@
 const Imap = require('node-imap');
 const simpleParser = require("mailparser").simpleParser;
 
-// 工具函数：将邮件列表转换为 HTML
-function generateEmailHtml(emails, mailbox) {
+// 工具函数：生成邮件列表HTML（带跳转链接）
+function generateEmailListHtml(emails, mailbox, baseUrl) {
     return `
         <!DOCTYPE html>
         <html lang="zh-CN">
@@ -17,7 +17,7 @@ function generateEmailHtml(emails, mailbox) {
                 table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
                 th { background-color: #3498db; color: white; padding: 12px 15px; text-align: left; }
                 td { padding: 12px 15px; border-bottom: 1px solid #ecf0f1; }
-                tr:hover { background-color: #f8f9fa; }
+                tr:hover { background-color: #f8f9fa; cursor: pointer; }
                 .subject { font-weight: 500; color: #2c3e50; }
                 .from { color: #34495e; }
                 .date { color: #7f8c8d; font-size: 0.9em; }
@@ -35,7 +35,7 @@ function generateEmailHtml(emails, mailbox) {
                     <th>预览</th>
                 </tr>
                 ${emails.map(email => `
-                    <tr>
+                    <tr onclick="window.location='${baseUrl}&message_id=${email.id}'">
                         <td class="from">${email.send || '未知发件人'}</td>
                         <td class="subject">${email.subject || '无主题'}</td>
                         <td class="date">${email.date ? new Date(email.date).toLocaleString() : '未知时间'}</td>
@@ -48,6 +48,146 @@ function generateEmailHtml(emails, mailbox) {
     `;
 }
 
+// 工具函数：生成邮件详情HTML（仿示例样式，支持图片、链接、交互按钮）
+function generateEmailDetailHtml(email, baseUrl) {
+    // 修复邮件内图片链接（确保内嵌图片能加载）
+    let content = email.html || email.text || '无内容';
+    // 补全相对路径图片的域名（适配Outlook等邮件服务器）
+    content = content.replace(/src="\/\//g, 'src="https://');
+    content = content.replace(/src="\/(?!\/)/g, 'src="https://outlook.office365.com/');
+
+    return `
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>邮件详情 - ${email.subject}</title>
+            <style>
+                body { 
+                    font-family: "Microsoft YaHei", Arial, sans-serif; 
+                    padding: 0; 
+                    margin: 0; 
+                    background: #f5f5f5; 
+                }
+                .email-container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    background: #fff;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                }
+                .email-header {
+                    background: #2c3e50;
+                    color: #fff;
+                    padding: 20px;
+                }
+                .email-title {
+                    font-size: 1.5em;
+                    margin-bottom: 10px;
+                }
+                .email-meta {
+                    font-size: 0.9em;
+                    color: #ddd;
+                }
+                .email-meta span {
+                    margin-right: 20px;
+                }
+                .email-content {
+                    padding: 20px;
+                    line-height: 1.8;
+                }
+                .email-content img {
+                    max-width: 100%;
+                    height: auto;
+                    margin: 10px 0;
+                }
+                .email-content a {
+                    color: #3498db;
+                    text-decoration: underline;
+                }
+                .close-btn {
+                    display: block;
+                    width: 100%;
+                    padding: 15px;
+                    background: #3498db;
+                    color: #fff;
+                    border: none;
+                    font-size: 1em;
+                    cursor: pointer;
+                }
+                .close-btn:hover {
+                    background: #2980b9;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="email-header">
+                    <div class="email-title">${email.subject || '无主题'}</div>
+                    <div class="email-meta">
+                        <span>发件人: ${email.send || '未知'}</span>
+                        <span>日期: ${email.date ? new Date(email.date).toLocaleString() : '未知'}</span>
+                    </div>
+                </div>
+                <div class="email-content">
+                    ${content}
+                </div>
+                <button class="close-btn" onclick="window.location='${baseUrl}'">关闭</button>
+            </div>
+        </body>
+        </html>
+    `;
+}
+
+// 核心函数：获取邮件列表（Graph API，含邮件ID）
+async function get_emails(access_token, mailbox) {
+    if (!access_token) return [];
+    try {
+        const response = await fetch(`https://graph.microsoft.com/v1.0/me/mailFolders/${mailbox}/messages?$top=100&$select=id,from,subject,bodyPreview,createdDateTime,body`, {
+            method: 'GET',
+            headers: { "Authorization": `Bearer ${access_token}` }
+        });
+        if (!response.ok) return [];
+        const responseData = await response.json();
+        return responseData.value.map(item => ({
+            id: item.id, // 邮件唯一ID，用于详情页跳转
+            send: item.from?.emailAddress?.address,
+            subject: item.subject,
+            text: item.bodyPreview,
+            html: item.body?.content,
+            date: item.createdDateTime,
+        }));
+    } catch (error) {
+        console.error('获取邮件列表失败：', error);
+        return [];
+    }
+}
+
+// 核心函数：获取单封邮件详情（Graph API）
+async function get_email_detail(access_token, message_id) {
+    if (!access_token || !message_id) return null;
+    try {
+        const response = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${message_id}?$select=id,from,subject,body,createdDateTime`, {
+            method: 'GET',
+            headers: { "Authorization": `Bearer ${access_token}` }
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        return {
+            id: data.id,
+            send: data.from?.emailAddress?.address,
+            subject: data.subject,
+            text: data.body?.content, // 纯文本内容
+            html: data.body?.content, // HTML内容（含图片、链接）
+            date: data.createdDateTime,
+        };
+    } catch (error) {
+        console.error('获取邮件详情失败：', error);
+        return null;
+    }
+}
+
+// 原有辅助函数（保持不变）
 async function get_access_token(refresh_token, client_id) {
     const response = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
         method: 'POST',
@@ -107,165 +247,85 @@ async function graph_api(refresh_token, client_id) {
     }
 }
 
-async function get_emails(access_token, mailbox) {
-    if (!access_token) {
-        console.log("Failed to obtain access token'");
-        return [];
-    }
-
-    try {
-        const response = await fetch(`https://graph.microsoft.com/v1.0/me/mailFolders/${mailbox}/messages?$top=10000`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                "Authorization": `Bearer ${access_token}`
-            },
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            return [];
-        }
-
-        const responseData = await response.json();
-        return responseData.value.map(item => ({
-            send: item['from']['emailAddress']['address'],
-            subject: item['subject'],
-            text: item['bodyPreview'],
-            html: item['body']['content'],
-            date: item['createdDateTime'],
-        }));
-
-    } catch (error) {
-        console.error('Error fetching emails:', error);
-        return [];
-    }
-}
-
+// 主入口函数
 module.exports = async (req, res) => {
-    // 验证密码
+    // 1. 验证密码
     const { password } = req.method === 'GET' ? req.query : req.body;
     const expectedPassword = process.env.PASSWORD;
     if (password !== expectedPassword && expectedPassword) {
-        return res.status(401).json({
-            error: 'Authentication failed. Please provide valid credentials.'
-        });
+        return res.status(401).json({ error: '认证失败，请提供正确密码' });
     }
 
-    // 获取所有参数（包含 response_type，默认 json）
+    // 2. 获取所有参数
     const params = req.method === 'GET' ? req.query : req.body;
     const { 
         refresh_token, 
         client_id, 
         email, 
         mailbox,
-        response_type = 'json'  // 默认为 JSON 格式
+        response_type = 'json',
+        message_id, // 单封邮件ID（用于详情页）
     } = params;
 
-    // 检查必要参数
+    // 3. 检查必要参数
     if (!refresh_token || !client_id || !email || !mailbox) {
         return res.status(400).json({ 
-            error: 'Missing required parameters: refresh_token, client_id, email, or mailbox' 
+            error: '缺少必要参数：refresh_token、client_id、email 或 mailbox' 
         });
     }
 
     try {
-        // 处理 Graph API 分支
+        // 4. 处理 Graph API 权限验证
         const graph_api_result = await graph_api(refresh_token, client_id);
-        if (graph_api_result.status) {
-            // 适配 mailbox 命名（Graph API 规范）
-            let graphMailbox = mailbox.toLowerCase();
-            if (!['inbox', 'junkemail'].includes(graphMailbox)) {
-                graphMailbox = 'inbox'; // 默认为收件箱
-            }
-
-            const emails = await get_emails(graph_api_result.access_token, graphMailbox);
-            
-            // 根据 response_type 返回对应格式
-            if (response_type === 'html') {
-                const html = generateEmailHtml(emails, graphMailbox);
-                return res.status(200).send(html); // 返回 HTML
-            } else {
-                return res.status(200).json(emails); // 返回 JSON（默认）
-            }
+        if (!graph_api_result.status) {
+            // 若Graph API权限不足，此处可 fallback 到 IMAP（需补充IMAP逻辑）
+            return res.status(403).json({ error: '无邮件读取权限，请检查应用权限配置' });
         }
 
-        // 处理 IMAP 分支
-        const access_token = await get_access_token(refresh_token, client_id);
-        const authString = generateAuthString(email, access_token);
+        // 5. 适配 mailbox 命名（Graph API 规范）
+        let graphMailbox = mailbox.toLowerCase();
+        if (!['inbox', 'junkemail'].includes(graphMailbox)) {
+            graphMailbox = 'inbox'; // 默认为收件箱
+        }
 
-        const imap = new Imap({
-            user: email,
-            xoauth2: authString,
-            host: 'outlook.office365.com',
-            port: 993,
-            tls: true,
-            tlsOptions: { rejectUnauthorized: false }
-        });
-
-        const emailList = [];
-        imap.once("ready", async () => {
-            try {
-                // 打开指定邮箱
-                await new Promise((resolve, reject) => {
-                    imap.openBox(mailbox, true, (err, box) => {
-                        if (err) return reject(err);
-                        resolve(box);
-                    });
-                });
-
-                // 搜索邮件
-                const results = await new Promise((resolve, reject) => {
-                    imap.search(["ALL"], (err, results) => {
-                        if (err) return reject(err);
-                        resolve(results);
-                    });
-                });
-
-                // 获取邮件内容
-                const f = imap.fetch(results, { bodies: "" });
-                f.on("message", (msg, seqno) => {
-                    msg.on("body", (stream, info) => {
-                        simpleParser(stream, (err, mail) => {
-                            if (err) throw err;
-                            emailList.push({
-                                send: mail.from.text,
-                                subject: mail.subject,
-                                text: mail.text,
-                                html: mail.html,
-                                date: mail.date,
-                            });
-                        });
-                    });
-                });
-
-                f.once("end", () => imap.end());
-            } catch (err) {
-                imap.end();
-                return res.status(500).json({ error: err.message });
+        // 6. 区分“列表页”和“详情页”逻辑
+        if (message_id) {
+            // 详情页：获取单封邮件并渲染HTML
+            const emailDetail = await get_email_detail(graph_api_result.access_token, message_id);
+            if (!emailDetail) {
+                return res.status(404).json({ error: '邮件不存在或已被删除' });
             }
-        });
 
-        imap.once('error', (err) => {
-            console.error('IMAP error:', err);
-            return res.status(500).json({ error: err.message });
-        });
-
-        imap.once('end', () => {
-            // 根据 response_type 返回对应格式
-            if (response_type === 'html') {
-                const html = generateEmailHtml(emailList, mailbox);
-                res.status(200).send(html); // 返回 HTML
-            } else {
-                res.status(200).json(emailList); // 返回 JSON（默认）
-            }
-            console.log('IMAP connection ended');
-        });
-
-        imap.connect();
+            // 生成详情页HTML（含返回列表的“关闭”按钮）
+            const baseUrl = `${req.protocol}://${req.get('host')}${req.path}?${new URLSearchParams({
+                refresh_token,
+                client_id,
+                email,
+                mailbox,
+                password,
+                response_type: 'html'
+            }).toString()}`;
+            const html = generateEmailDetailHtml(emailDetail, baseUrl);
+            return res.status(200).send(html);
+        } else {
+            // 列表页：获取邮件列表并渲染HTML
+            const emails = await get_emails(graph_api_result.access_token, graphMailbox);
+            
+            // 生成列表页HTML（每封邮件可点击跳转详情页）
+            const baseUrl = `${req.protocol}://${req.get('host')}${req.path}?${new URLSearchParams({
+                refresh_token,
+                client_id,
+                email,
+                mailbox,
+                password,
+                response_type: 'html'
+            }).toString()}`;
+            const html = generateEmailListHtml(emails, graphMailbox, baseUrl);
+            return res.status(200).send(html);
+        }
 
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: error.message }); // 错误响应始终返回 JSON
+        console.error('系统错误：', error);
+        res.status(500).json({ error: error.message });
     }
 };
