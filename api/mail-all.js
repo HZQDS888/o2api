@@ -1,39 +1,45 @@
 const Imap = require('node-imap');
 const simpleParser = require("mailparser").simpleParser;
 
-// 工具函数：将邮件列表转换为HTML
+// 工具函数：将邮件列表转换为 HTML
 function generateEmailHtml(emails, mailbox) {
     return `
         <!DOCTYPE html>
-        <html>
+        <html lang="zh-CN">
         <head>
-            <title>Emails - ${mailbox}</title>
+            <meta charset="UTF-8">
+            <title>邮件列表 - ${mailbox}</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                h1 { color: #333; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-                th { background-color: #f5f5f5; }
-                tr:hover { background-color: #f9f9f9; }
-                .subject { font-weight: 500; }
-                .date { color: #666; font-size: 0.9em; }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: "Microsoft YaHei", Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+                h1 { color: #2c3e50; margin: 20px 0; padding-bottom: 10px; border-bottom: 2px solid #3498db; }
+                .mailbox-info { color: #7f8c8d; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+                th { background-color: #3498db; color: white; padding: 12px 15px; text-align: left; }
+                td { padding: 12px 15px; border-bottom: 1px solid #ecf0f1; }
+                tr:hover { background-color: #f8f9fa; }
+                .subject { font-weight: 500; color: #2c3e50; }
+                .from { color: #34495e; }
+                .date { color: #7f8c8d; font-size: 0.9em; }
+                .preview { color: #666; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
             </style>
         </head>
         <body>
-            <h1>Emails in ${mailbox} (${emails.length} items)</h1>
+            <h1>邮件列表</h1>
+            <div class="mailbox-info">当前文件夹：${mailbox} | 共 ${emails.length} 封邮件</div>
             <table>
                 <tr>
-                    <th>From</th>
-                    <th>Subject</th>
-                    <th>Date</th>
-                    <th>Preview</th>
+                    <th>发件人</th>
+                    <th>主题</th>
+                    <th>日期</th>
+                    <th>预览</th>
                 </tr>
                 ${emails.map(email => `
                     <tr>
-                        <td>${email.send || 'N/A'}</td>
-                        <td class="subject">${email.subject || 'No subject'}</td>
-                        <td class="date">${email.date ? new Date(email.date).toLocaleString() : 'N/A'}</td>
-                        <td>${email.text ? email.text.substring(0, 100) + '...' : 'No preview'}</td>
+                        <td class="from">${email.send || '未知发件人'}</td>
+                        <td class="subject">${email.subject || '无主题'}</td>
+                        <td class="date">${email.date ? new Date(email.date).toLocaleString() : '未知时间'}</td>
+                        <td class="preview">${email.text ? email.text.substring(0, 100) + (email.text.length > 100 ? '...' : '') : '无内容'}</td>
                     </tr>
                 `).join('')}
             </table>
@@ -43,7 +49,6 @@ function generateEmailHtml(emails, mailbox) {
 }
 
 async function get_access_token(refresh_token, client_id) {
-    // （原逻辑不变）
     const response = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -74,7 +79,6 @@ const generateAuthString = (user, accessToken) => {
 }
 
 async function graph_api(refresh_token, client_id) {
-    // （原逻辑不变）
     const response = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -104,7 +108,6 @@ async function graph_api(refresh_token, client_id) {
 }
 
 async function get_emails(access_token, mailbox) {
-    // （原逻辑不变，返回原始邮件数组，不在此转换格式）
     if (!access_token) {
         console.log("Failed to obtain access token'");
         return [];
@@ -140,7 +143,7 @@ async function get_emails(access_token, mailbox) {
 }
 
 module.exports = async (req, res) => {
-    // 1. 验证密码
+    // 验证密码
     const { password } = req.method === 'GET' ? req.query : req.body;
     const expectedPassword = process.env.PASSWORD;
     if (password !== expectedPassword && expectedPassword) {
@@ -149,17 +152,17 @@ module.exports = async (req, res) => {
         });
     }
 
-    // 2. 获取所有参数（包括 response_type，默认 json）
+    // 获取所有参数（包含 response_type，默认 json）
     const params = req.method === 'GET' ? req.query : req.body;
     const { 
         refresh_token, 
         client_id, 
         email, 
         mailbox,
-        response_type = 'json'  // 默认返回 JSON
+        response_type = 'json'  // 默认为 JSON 格式
     } = params;
 
-    // 3. 检查必要参数
+    // 检查必要参数
     if (!refresh_token || !client_id || !email || !mailbox) {
         return res.status(400).json({ 
             error: 'Missing required parameters: refresh_token, client_id, email, or mailbox' 
@@ -167,13 +170,13 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // 4. 处理 Graph API 分支
+        // 处理 Graph API 分支
         const graph_api_result = await graph_api(refresh_token, client_id);
         if (graph_api_result.status) {
-            // 适配 mailbox 命名（Graph API 与 IMAP 可能不同）
+            // 适配 mailbox 命名（Graph API 规范）
             let graphMailbox = mailbox.toLowerCase();
             if (!['inbox', 'junkemail'].includes(graphMailbox)) {
-                graphMailbox = 'inbox';
+                graphMailbox = 'inbox'; // 默认为收件箱
             }
 
             const emails = await get_emails(graph_api_result.access_token, graphMailbox);
@@ -181,13 +184,13 @@ module.exports = async (req, res) => {
             // 根据 response_type 返回对应格式
             if (response_type === 'html') {
                 const html = generateEmailHtml(emails, graphMailbox);
-                return res.status(200).send(html);
+                return res.status(200).send(html); // 返回 HTML
             } else {
-                return res.status(200).json(emails);
+                return res.status(200).json(emails); // 返回 JSON（默认）
             }
         }
 
-        // 5. 处理 IMAP 分支
+        // 处理 IMAP 分支
         const access_token = await get_access_token(refresh_token, client_id);
         const authString = generateAuthString(email, access_token);
 
@@ -252,9 +255,9 @@ module.exports = async (req, res) => {
             // 根据 response_type 返回对应格式
             if (response_type === 'html') {
                 const html = generateEmailHtml(emailList, mailbox);
-                res.status(200).send(html);
+                res.status(200).send(html); // 返回 HTML
             } else {
-                res.status(200).json(emailList);
+                res.status(200).json(emailList); // 返回 JSON（默认）
             }
             console.log('IMAP connection ended');
         });
@@ -263,7 +266,6 @@ module.exports = async (req, res) => {
 
     } catch (error) {
         console.error('Error:', error);
-        // 错误响应也可根据格式调整（这里简化为始终返回JSON错误）
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message }); // 错误响应始终返回 JSON
     }
 };
