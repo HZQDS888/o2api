@@ -198,6 +198,34 @@
             font-weight: bold;
         }
 
+        /* 快捷入口样式 */
+        .quick-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-actions a {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quick-actions a:hover {
+            background-color: #2980b9;
+        }
+
         /* 上传区域样式 - 暗色 */
         .upload-section {
             background-color: #1e1e1e;
@@ -720,7 +748,7 @@
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
-                width: 250px;
+                width: 220px !important; /* 缩小移动端侧边栏宽度 */
             }
 
             .sidebar.active {
@@ -729,7 +757,7 @@
 
             .content {
                 margin-left: 0;
-                padding: 20px 15px;
+                padding: 15px 10px !important; /* 缩小内边距 */
                 padding-top: 60px; /* 给菜单按钮留出空间 */
             }
 
@@ -790,6 +818,17 @@
                 margin-bottom: 5px;
                 margin-right: 0;
             }
+
+            /* 优化表格在移动端显示 */
+            .email-table, .mail-table {
+                min-width: 320px !important; /* 降低最小宽度 */
+            }
+
+            .email-table th, .email-table td,
+            .mail-table th, .mail-table td {
+                padding: 8px 10px !important; /* 缩小内边距 */
+                font-size: 13px !important; /* 缩小字体 */
+            }
         }
     </style>
     <!-- 引入Font Awesome图标库 -->
@@ -814,28 +853,42 @@
         <ul>
             <li><a href="#" data-target="dashboard" class="active"><i class="fas fa-tachometer-alt"></i>仪表盘</a></li>
             <li><a href="#" data-target="emails"><i class="fas fa-envelope"></i>邮箱管理</a></li>
-            <!-- 购买按钮及新增的两个蓝色按钮 -->
+            <!-- 购买按钮及新增的蓝色按钮 -->
             <li><a href="https://68n.cn/8to6G" target="_blank" class="buy-link"><i class="fas fa-shopping-cart"></i>购买长效微软邮箱</a></li>
-            <li><a href="https://link3.cc/hzqds888" target="_blank" class="buy-link"><i class="fas fa-th-large"></i>更多软件工具</a></li>
+            <li><a href="https://link3.cc/hzqds888" target="_blank" class="buy-link"><i class="fas fa-th-large"></i>更多软件工具合集</a></li>
+            <!-- 新增：api调用文档教程按钮 -->
+            <li><a href="https://xiaoheifk.cn/api.html" target="_blank" class="buy-link"><i class="fas fa-file-alt"></i>（api）调用文档教程</a></li>
             <li><a href="https://www.qianxun1688.com/rights-shop/1CDFE3FC" target="_blank" class="buy-link"><i class="fas fa-ticket-alt"></i>全网会员5折优惠网</a></li>
         </ul>
     </div>
 
     <div class="content">
-        <!-- 仪表盘内容（账号数量滑动显示） -->
+        <!-- 仪表盘内容 -->
         <div id="dashboard" class="content-section active">
-            <h1>邮箱总数</h1>
+            <h1 style="color: #3498db; font-weight: bold;">邮箱总数</h1>
             <div class="dashboard-cards">
                 <div class="dashboard-card">
                     <h3>账号数量</h3>
                     <p id="account-count">0</p>
                 </div>
             </div>
+            <!-- 快捷入口区域 -->
+            <div class="quick-actions">
+                <a href="#" data-target="emails">
+                    <i class="fas fa-envelope"></i> 邮箱管理
+                </a>
+                <a href="https://68n.cn/8to6G" target="_blank">
+                    <i class="fas fa-shopping-cart"></i> 购买邮箱
+                </a>
+                <a href="https://link3.cc/hzqds888" target="_blank">
+                    <i class="fas fa-th-large"></i> 更多工具
+                </a>
+            </div>
         </div>
 
-        <!-- 邮箱管理内容（含删除全部、导出按钮） -->
+        <!-- 邮箱管理内容 -->
         <div id="emails" class="content-section">
-            <h1>邮箱管理</h1>
+            <h1 style="color: #3498db; font-weight: bold;">邮箱管理</h1>
             <div class="upload-section">
                 <div class="upload-box" id="upload-box">
                     <i class="fas fa-cloud-upload-alt"></i>
@@ -893,7 +946,7 @@
             </div>
         </div>
 
-        <!-- 邮件列表内容（新增搜索功能） -->
+        <!-- 邮件列表内容 -->
         <div id="mail-list" class="content-section">
             <h1>邮件列表</h1>
             
@@ -1421,7 +1474,7 @@
                             });
                         } else {
                             // 其他非 500 错误
-                            if (response.status == 401) {
+                            if (response.status === 401) {
                                 throw response;
                             }
                             // 其他非 500 错误
@@ -1447,7 +1500,7 @@
                     }
                 })
                 .catch(error => {
-                    if (error.status == 401) {
+                    if (error.status === 401) {
                         showModal('提示', '为了防止滥用，已加密码验证。如需使用请购买，请联系管理员小黑QQ：113575320。');
                         return;
                     }
