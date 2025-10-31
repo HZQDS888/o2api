@@ -829,6 +829,16 @@
                 padding: 8px 10px !important; /* 缩小内边距 */
                 font-size: 13px !important; /* 缩小字体 */
             }
+
+            /* 调整快捷按钮在移动端的显示 */
+            .quick-actions {
+                flex-direction: column;
+            }
+            
+            .quick-actions a {
+                width: 100%;
+                min-width: auto;
+            }
         }
     </style>
     <!-- 引入Font Awesome图标库 -->
@@ -855,6 +865,8 @@
             <li><a href="#" data-target="emails"><i class="fas fa-envelope"></i>邮箱管理</a></li>
             <!-- 购买按钮及新增的蓝色按钮 -->
             <li><a href="https://68n.cn/8to6G" target="_blank" class="buy-link"><i class="fas fa-shopping-cart"></i>购买长效微软邮箱</a></li>
+            <!-- 新增：微软令牌刷新工具按钮（蓝色） -->
+            <li><a href="https://wwik.lanzouu.com/iq5Mh39ml3sh" target="_blank" class="buy-link"><i class="fas fa-sync-alt"></i>微软令牌刷新工具</a></li>
             <li><a href="https://link3.cc/hzqds888" target="_blank" class="buy-link"><i class="fas fa-th-large"></i>更多软件工具</a></li>
             <!-- 新增：api调用文档教程按钮 -->
             <li><a href="https://xiaoheifk.cn/api.html" target="_blank" class="buy-link"><i class="fas fa-file-alt"></i>api调用文档教程</a></li>
@@ -872,7 +884,7 @@
                     <p id="account-count">0</p>
                 </div>
             </div>
-            <!-- 快捷入口区域 -->
+            <!-- 快捷入口区域 - 已同步侧边栏按钮 -->
             <div class="quick-actions">
                 <a href="#" data-target="emails">
                     <i class="fas fa-envelope"></i> 邮箱管理
@@ -880,8 +892,18 @@
                 <a href="https://68n.cn/8to6G" target="_blank">
                     <i class="fas fa-shopping-cart"></i> 购买邮箱
                 </a>
+                <a href="https://wwik.lanzouu.com/iq5Mh39ml3sh" target="_blank">
+                    <i class="fas fa-sync-alt"></i> 令牌刷新工具
+                </a>
                 <a href="https://link3.cc/hzqds888" target="_blank">
                     <i class="fas fa-th-large"></i> 更多工具
+                </a>
+                <!-- 补充缺少的两个按钮，与侧边栏保持一致 -->
+                <a href="https://xiaoheifk.cn/api.html" target="_blank">
+                    <i class="fas fa-file-alt"></i> api调用文档
+                </a>
+                <a href="https://www.qianxun1688.com/rights-shop/1CDFE3FC" target="_blank">
+                    <i class="fas fa-ticket-alt"></i> 会员优惠网
                 </a>
             </div>
         </div>
@@ -942,6 +964,9 @@
                     <option value="50">50 条/页</option>
                     <option value="100">100 条/页</option>
                     <option value="200">200 条/页</option>
+                    <option value="500">500 条/页</option>
+                    <option value="5000">5000 条/页</option>
+                    <option value="10000">10000 条/页</option>
                 </select>
             </div>
         </div>
@@ -1903,39 +1928,33 @@
 
         // 更新仪表盘数据
         function updateDashboard(data) {
-            const accountCount = data.length;
-            animateValue('account-count', 0, accountCount, 800);
+            const countElement = document.getElementById('account-count');
+            const currentValue = parseInt(countElement.textContent) || 0;
+            const targetValue = data.length;
+            
+            if (currentValue !== targetValue) {
+                animateValue('account-count', currentValue, targetValue, 1000);
+            }
         }
 
-        // 搜索邮箱
+        // 邮箱搜索功能
         function searchEmails() {
             searchKeyword = document.getElementById('email-search').value.trim().toLowerCase();
-            currentPage = 1;
-            const encryptedData = localStorage.getItem('emailData') || '';
-            let data = encryptedData ? decryptData(encryptedData) || [] : [];
-            const filteredData = searchKeyword ? data.filter(item => 
-                item.email.toLowerCase().includes(searchKeyword)
-            ) : data;
-            renderTable(filteredData);
-            renderPagination(filteredData.length);
-            toggleNoData(filteredData.length === 0);
+            currentPage = 1; // 搜索时重置到第一页
+            loadData();
         }
 
-        // 清空搜索
+        // 清空邮箱搜索
         function clearSearch() {
             document.getElementById('email-search').value = '';
             searchKeyword = '';
-            currentPage = 1;
-            const encryptedData = localStorage.getItem('emailData') || '';
-            let data = encryptedData ? decryptData(encryptedData) || [] : [];
-            renderTable(data);
-            renderPagination(data.length);
-            toggleNoData(data.length === 0);
+            currentPage = 1; // 清空搜索时重置到第一页
+            loadData();
         }
 
-        // 设置密码（加密存储）
+        // 设置密码（加密保存）
         function setPassword() {
-            const password = document.getElementById('password').value.trim();
+            const password = document.getElementById('password').value;
             if (password) {
                 localStorage.setItem('password', encryptData(password));
             } else {
@@ -1945,14 +1964,14 @@
 
         // 初始化搜索框回车事件
         function initSearchEnter() {
-            // 邮箱搜索框回车
+            // 邮箱搜索框回车事件
             document.getElementById('email-search').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     searchEmails();
                 }
             });
-
-            // 邮件搜索框回车
+            
+            // 邮件搜索框回车事件
             document.getElementById('mail-search').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     searchMails();
@@ -1963,30 +1982,18 @@
         // 初始化窗口大小监听
         function initWindowResize() {
             window.addEventListener('resize', function() {
-                const sidebar = document.getElementById('sidebar');
+                // 大屏幕自动展开侧边栏
                 if (window.innerWidth > 768) {
-                    sidebar.classList.remove('active');
+                    document.getElementById('sidebar').classList.remove('active');
                 }
             });
         }
 
-        // 点击模态框外部关闭
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-            if (e.target === confirmModal) closeConfirmModal();
-            if (e.target === editModal) closeEditModal();
-            if (e.target === document.getElementById('mail-modal')) closeMailModal();
-        });
-
-        // 初始化开发者信息输出
+        // 初始化开发者信息
         function initDevInfo() {
-            console.log('%c感谢您使用本项目！', 'color: #999; font-size: 11px; margin-top: 5px; margin-bottom: 5px;');
-            console.log('%c作者: HChaohui', 'color: #3498db; font-size: 12px; font-weight: bold; margin-bottom: 5px;');
-            console.log('%c开源地址: %chttps://github.com/HChaoHui/msOauth2api', 'color: #3498db; font-size: 12px; font-weight: bold;', 'color: #3498db; font-size: 12px; text-decoration: underline; cursor: pointer;');
-            console.log('%c如需使用或修改本项目，请保留作者信息。感谢您的理解和支持！', 'color: #999; font-size: 11px; margin-top: 5px; margin-bottom: 5px;');
+            console.log('小黑邮箱管理系统 - 开发者QQ:113575320');
         }
     </script>
-
 </body>
 
 </html>
