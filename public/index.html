@@ -867,6 +867,8 @@
             <li><a href="https://68n.cn/8to6G" target="_blank" class="buy-link"><i class="fas fa-shopping-cart"></i>购买长效微软邮箱</a></li>
             <!-- 新增：微软令牌刷新工具按钮（蓝色） -->
             <li><a href="https://wwik.lanzouu.com/iq5Mh39ml3sh" target="_blank" class="buy-link"><i class="fas fa-sync-alt"></i>微软令牌刷新工具</a></li>
+            <!-- 新增：微软令牌授权工具按钮（蓝色） -->
+            <li><a href="https://wwik.lanzouu.com/iTnxu3anj2tc" target="_blank" class="buy-link"><i class="fas fa-key"></i>微软令牌授权工具</a></li>
             <li><a href="https://link3.cc/hzqds888" target="_blank" class="buy-link"><i class="fas fa-th-large"></i>更多软件工具</a></li>
             <!-- 新增：api调用文档教程按钮 -->
             <li><a href="https://xiaoheifk.cn/api.html" target="_blank" class="buy-link"><i class="fas fa-file-alt"></i>api调用文档教程</a></li>
@@ -894,6 +896,10 @@
                 </a>
                 <a href="https://wwik.lanzouu.com/iq5Mh39ml3sh" target="_blank">
                     <i class="fas fa-sync-alt"></i> 令牌刷新工具
+                </a>
+                <!-- 新增：微软令牌授权工具快捷入口 -->
+                <a href="https://wwik.lanzouu.com/iTnxu3anj2tc" target="_blank">
+                    <i class="fas fa-key"></i> 令牌授权工具
                 </a>
                 <a href="https://link3.cc/hzqds888" target="_blank">
                     <i class="fas fa-th-large"></i> 更多工具
@@ -1094,23 +1100,35 @@
             initDevInfo();
         });
 
-        // 初始化侧边栏链接事件
+        // 初始化侧边栏链接事件（修复跳转问题）
         function initSidebarLinks() {
             document.querySelectorAll('.sidebar ul li a').forEach(link => {
                 link.addEventListener('click', function(e) {
-                    // 外部链接（带target="_blank"）直接跳转
-                    if (this.target === '_blank') return;
+                    // 外部链接（带target="_blank"）直接跳转，不阻止默认行为
+                    if (this.hasAttribute('target') && this.target === '_blank') {
+                        return;
+                    }
                     
+                    // 内部链接（邮箱管理、仪表盘）阻止默认跳转，执行切换逻辑
                     e.preventDefault();
+                    
                     // 移除所有链接选中状态
                     document.querySelectorAll('.sidebar ul li a').forEach(l => l.classList.remove('active'));
                     // 激活当前链接
                     this.classList.add('active');
-                    // 获取目标ID并切换内容区域
+                    
+                    // 获取目标内容区域ID
                     const targetId = this.getAttribute('data-target');
-                    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+                    if (!targetId) return; // 没有目标ID则退出
+                    
+                    // 切换内容区域显示
+                    document.querySelectorAll('.content-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
                     const targetSection = document.getElementById(targetId);
-                    if (targetSection) targetSection.classList.add('active');
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                    }
                     
                     // 移动端自动收起菜单
                     if (window.innerWidth <= 768) {
@@ -1120,20 +1138,35 @@
             });
         }
 
-        // 初始化快捷入口跳转事件
+        // 初始化快捷入口跳转事件（修复跳转问题）
         function initQuickActions() {
-            const emailQuickLink = document.querySelector('.quick-actions a[data-target="emails"]');
-            if (emailQuickLink) {
-                emailQuickLink.addEventListener('click', function(e) {
+            // 给所有快捷入口绑定事件（包括邮箱管理）
+            document.querySelectorAll('.quick-actions a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // 外部链接直接跳转
+                    if (this.hasAttribute('target') && this.target === '_blank') {
+                        return;
+                    }
+                    
+                    // 内部链接（邮箱管理）阻止默认行为，执行切换
                     e.preventDefault();
+                    const targetId = this.getAttribute('data-target');
+                    if (!targetId) return;
+                    
                     // 切换侧边栏选中状态
                     document.querySelectorAll('.sidebar ul li a').forEach(l => l.classList.remove('active'));
-                    document.querySelector('.sidebar ul li a[data-target="emails"]').classList.add('active');
+                    document.querySelector(`.sidebar ul li a[data-target="${targetId}"]`).classList.add('active');
+                    
                     // 切换内容区域
-                    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
-                    document.getElementById('emails').classList.add('active');
+                    document.querySelectorAll('.content-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                    }
                 });
-            }
+            });
         }
 
         // 移动端菜单切换
