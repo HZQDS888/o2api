@@ -33,7 +33,7 @@ const CONFIG = {
   REQUIRE_CODE: true,
   CODE_STORE_PATH: path.join(__dirname, 'codeStore.json'),
   MANAGE_PASSWORD: 'admin123', // 👉 改成你的管理密码（比如myadmin888）
-  MANAGE_PAGE_PATH: '/manage-codes' // 👉 管理页面地址（不用改，记着就行）
+  MANAGE_TRIGGER: 'manage-page' // 触发管理页面的参数（不用改）
 };
 
 // ===================== 工具函数（不用改）=====================
@@ -413,11 +413,15 @@ async function get_emails(access_token, mailbox, returnRaw = false) {
   }
 }
 
-// ===================== 主入口（自动识别管理页面/API调用）=====================
+// ===================== 主入口（修改核心：双触发管理页面，兼容所有路由）=====================
 module.exports = async (req, res) => {
   try {
-    // 👉 访问管理页面：http://你的服务器地址/你的接口路径/manage-codes
-    if (req.path === CONFIG.MANAGE_PAGE_PATH) {
+    // 👉 两种访问方式（任选一种，都能打开管理页面，彻底解决404）
+    // 方式1：路径触发（原方式）：https://xiaoheifk.cn/api/xiaohei/manage-codes
+    // 方式2：参数触发（新增，兼容性更强）：https://xiaoheifk.cn/api/xiaohei?manage-page=1
+    const isManagePage = req.path === '/manage-codes' || req.query[CONFIG.MANAGE_TRIGGER] === '1';
+    
+    if (isManagePage) {
       const { manage, admin_pwd } = req.query;
       let result = '请执行对应操作';
       let codes = [];
