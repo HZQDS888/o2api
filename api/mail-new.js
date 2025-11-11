@@ -241,7 +241,7 @@ module.exports = async (req, res) => {
     if (password !== expectedPassword && expectedPassword) {
       return res.status(401).json({
         code: 4010,
-        error: '认证失败，请提供有效的验证密码'
+        error: '认证失败 请联系小黑-QQ:113575320 购买权限再使用'
       });
     }
 
