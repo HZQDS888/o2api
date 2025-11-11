@@ -1,9 +1,9 @@
 module.exports = async (req, res) => {
-  // 主服务必须配置的中间件（即使只用GET，也建议配置）
+  // 主服务必须配置中间件（否则参数解析失败）
   // app.use(express.json());
   // app.use(express.urlencoded({ extended: true }));
 
-  // 1. 认证逻辑（send_password校验）
+  // 1. 认证逻辑
   const { send_password } = req.method === 'GET' ? req.query : req.body;
   const expectedPassword = process.env.SEND_PASSWORD;
   if (send_password !== expectedPassword && expectedPassword) {
@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     });
   }
 
-  // 2. 仅支持GET/POST
+  // 2. 限制请求方法
   if (!['GET', 'POST'].includes(req.method)) {
     return res.status(405).json({
       code: 405,
@@ -22,11 +22,10 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 3. 提取参数（兜底空字符串，避免undefined）
+    // 3. 提取并校验参数
     const params = req.method === 'GET' ? req.query : req.body;
     const { refresh_token = '', client_id = '', email = '' } = params;
 
-    // 必传参数校验
     if (!refresh_token.trim() || !client_id.trim() || !email.trim()) {
       return res.status(400).json({
         code: 4001,
@@ -34,7 +33,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 邮箱格式校验
     const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailReg.test(email)) {
       return res.status(400).json({
@@ -43,19 +41,10 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 4. GET请求URL长度友好提示（不强制拦截，仅提示）
-    if (req.method === 'GET') {
-      const requestUrl = req.originalUrl || req.url || '';
-      if (requestUrl.length > 2000) {
-        console.warn('GET请求URL过长，可能导致失败');
-        // 不拦截，让用户尝试，失败后提示用POST
-      }
-    }
-
-    // 5. 核心：刷新令牌
+    // 4. 核心：刷新令牌（增加微软返回数据打印）
     const tokenData = await refreshTokenForGraphAPI(refresh_token, client_id);
 
-    // 6. 成功响应
+    // 5. 成功响应
     res.status(200).json({
       code: 200,
       message: '令牌刷新成功（支持 Graph API 调用）',
@@ -63,40 +52,65 @@ module.exports = async (req, res) => {
         email,
         access_token: tokenData.access_token,
         refresh_token: tokenData.new_refresh_token,
-        scope: (tokenData.scope || 'https://graph.microsoft.com/.default').split(' '),
+        scope: tokenData.scope.split(' '),
         expires_in: 3600,
         timestamp: new Date().toISOString()
       }
     });
 
   } catch (error) {
-    // 7. 错误处理（区分GET URL过长的情况）
+    // 6. 精准解析微软返回的错误
     console.error('令牌刷新失败：', error);
     let statusCode = 500;
     let errorCode = 5000;
     let errorMsg = '服务器错误：刷新令牌失败';
     let tip = '';
 
-    if (error.message.includes('HTTP error! status: 401')) {
-      statusCode = 401;
-      errorCode = 4011;
-      errorMsg = '旧 refresh_token 已失效';
-      tip = '请重新获取新的 refresh_token';
-    } else if (error.message.includes('HTTP error! status: 403')) {
-      statusCode = 403;
-      errorCode = 4031;
-      errorMsg = '权限不足';
-      tip = 'Azure 应用需配置 offline_access 和 Graph API 权限';
-    } else if (req.method === 'GET' && (error.message.includes('414') || error.message.includes('too long'))) {
+    // 解析微软返回的错误（如 invalid_grant、invalid_client 等）
+    if (error.message.includes('HTTP error! status: 400')) {
+      // 提取微软返回的 error 字段
+      const microsoftError = error.message.match(/response: ({.*})/);
+      if (microsoftError && microsoftError[1]) {
+        try {
+          const errData = JSON.parse(microsoftError[1]);
+          switch (errData.error) {
+            case 'invalid_grant':
+              statusCode = 401;
+              errorCode = 4011;
+              errorMsg = 'refresh_token 无效或已过期';
+              tip = '请重新发起 OAuth2 授权流程，获取新的 refresh_token';
+              break;
+            case 'invalid_client':
+              statusCode = 400;
+              errorCode = 4003;
+              errorMsg = 'client_id 无效或 Azure 应用配置错误';
+              tip = '检查 Azure 应用的 client_id 是否正确，且已启用"允许公共客户端流"';
+              break;
+            case 'invalid_scope':
+              statusCode = 400;
+              errorCode = 4005;
+              errorMsg = '权限范围无效';
+              tip = 'Azure 应用未配置对应的 Graph API 权限';
+              break;
+            default:
+              errorMsg = `微软返回错误：${errData.error_description || errData.error}`;
+              tip = '参考 Azure 应用配置指南检查权限和认证设置';
+          }
+        } catch (e) {
+          errorMsg = '参数无效：微软拒绝请求';
+          tip = '检查 client_id 和 refresh_token 是否匹配';
+        }
+      }
+    } else if (error.message.includes('微软服务器未返回有效令牌对')) {
       statusCode = 400;
       errorCode = 4004;
-      errorMsg = 'GET请求URL过长导致失败';
-      tip = '请改用POST请求（参数放JSON体中，无长度限制）';
-    } else if (error.message.includes('Cannot read properties of undefined')) {
-      statusCode = 500;
-      errorCode = 5001;
-      errorMsg = '服务器参数解析错误';
-      tip = '已修复，请重新尝试';
+      errorMsg = '微软服务器未返回令牌';
+      tip = '可能是 Azure 应用未配置 offline_access 权限，或 refresh_token 已失效';
+    } else if (error.message.includes('fetch failed')) {
+      statusCode = 504;
+      errorCode = 5041;
+      errorMsg = '请求超时';
+      tip = '服务器网络无法访问微软令牌端点，检查防火墙设置';
     }
 
     res.status(statusCode).json({
@@ -108,11 +122,10 @@ module.exports = async (req, res) => {
   }
 };
 
-// 核心刷新函数（修复所有undefined场景）
+// 核心函数：增加微软返回数据完整解析
 async function refreshTokenForGraphAPI(refresh_token, client_id) {
   const tokenEndpoint = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
 
-  // 超时控制
   const fetchWithTimeout = (url, options, timeout = 10000) => {
     return Promise.race([
       fetch(url, options),
@@ -132,16 +145,22 @@ async function refreshTokenForGraphAPI(refresh_token, client_id) {
         client_id: client_id,
         grant_type: 'refresh_token',
         refresh_token: refresh_token,
-        scope: 'https://graph.microsoft.com/.default'
+        // 优化：明确指定权限，而非默认 .default
+        scope: 'offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send'
       }).toString()
     });
 
+    // 打印微软返回的完整响应（方便排查）
+    const responseText = await response.text();
+    console.log('微软令牌端点返回：', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text().catch(() => '无详细错误');
-      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+      throw new Error(`HTTP error! status: ${response.status}, response: ${responseText}`);
     }
 
-    const data = await response.json().catch(() => ({ access_token: '', refresh_token: '' }));
+    const data = JSON.parse(responseText);
+
+    // 校验令牌是否存在
     if (!data.access_token || !data.refresh_token) {
       throw new Error('微软服务器未返回有效令牌对');
     }
@@ -149,7 +168,7 @@ async function refreshTokenForGraphAPI(refresh_token, client_id) {
     return {
       access_token: data.access_token,
       new_refresh_token: data.refresh_token,
-      scope: data.scope || 'https://graph.microsoft.com/.default'
+      scope: data.scope || 'offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send'
     };
   } catch (error) {
     throw new Error(`核心错误：${error.message}`);
