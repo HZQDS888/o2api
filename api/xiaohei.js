@@ -1,7 +1,5 @@
 const Imap = require('node-imap');
 const simpleParser = require("mailparser").simpleParser;
-const fs = require('fs').promises;
-const path = require('path');
 
 // ===================== 全局配置（只改2处！）=====================
 const CONFIG = {
@@ -31,9 +29,14 @@ const CONFIG = {
   SUPPORTED_METHODS: ['GET', 'POST'],
   REQUIRED_PARAMS: ['refresh_token', 'client_id', 'email', 'mailbox', 'code'],
   REQUIRE_CODE: true,
-  CODE_STORE_PATH: path.join(__dirname, 'codeStore.json'),
   MANAGE_PASSWORD: 'admin123', // 👉 改成你的管理密码（比如myadmin888）
-  MANAGE_TRIGGER: 'manage-page' // 触发管理页面的参数（不用改）
+  MANAGE_TRIGGER: 'manage-page', // 触发管理页面的参数（不用改）
+  // 卡密直接存在内存中（无需文件，适配只读系统）
+  CODE_LIST: [
+    // 初始测试卡密（可直接用，也能通过管理页面修改/新增）
+    { code: "XIAOHEI001", remaining: 50, total: 100, expiresAt: "2025-12-31T00:00:00.000Z" },
+    { code: "XIAOHEI002", remaining: 30, total: 50, expiresAt: "2025-12-31T00:00:00.000Z" }
+  ]
 };
 
 // ===================== 工具函数（不用改）=====================
@@ -74,74 +77,51 @@ function validateParams(params) {
   return null;
 }
 
-// ===================== 卡密存储（自动创建/读写）=====================
-async function initCodeStore() {
-  try {
-    await fs.access(CONFIG.CODE_STORE_PATH);
-  } catch {
-    await fs.writeFile(CONFIG.CODE_STORE_PATH, JSON.stringify({ codes: [] }, null, 2));
-    console.log('卡密文件已自动创建：codeStore.json');
-  }
-}
-
-async function readCodeStore() {
-  await initCodeStore();
-  const data = await fs.readFile(CONFIG.CODE_STORE_PATH, 'utf8');
-  return JSON.parse(data).codes || [];
-}
-
-async function saveCodeStore(codes) {
-  await fs.writeFile(CONFIG.CODE_STORE_PATH, JSON.stringify({ codes }, null, 2));
-}
-
-// ===================== 卡密核心功能（不用改）=====================
+// ===================== 卡密核心功能（内存操作，无文件读写）=====================
 async function verifyAndDeductCode(code) {
   if (!code) return null;
-  const codes = await readCodeStore();
-  const codeObj = codes.find(c => c.code === code);
+  const codeObj = CONFIG.CODE_LIST.find(c => c.code === code);
 
   if (!codeObj) return null;
   const now = new Date();
   if (codeObj.expiresAt && new Date(codeObj.expiresAt) < now) return null;
   if (codeObj.remaining <= 0) return null;
 
+  // 直接修改内存中的次数
   codeObj.remaining -= 1;
-  await saveCodeStore(codes);
   console.log(`卡密 ${code} 调用成功，剩余次数：${codeObj.remaining}`);
   return codeObj;
 }
 
 async function addNewCode(code, times = 100, days = 365) {
-  const codes = await readCodeStore();
-  if (codes.find(c => c.code === code)) return { success: false, msg: '卡密已存在！' };
+  if (CONFIG.CODE_LIST.find(c => c.code === code)) return { success: false, msg: '卡密已存在！' };
   
   const now = new Date();
   const expiresAt = new Date(now);
   expiresAt.setDate(expiresAt.getDate() + days);
   
-  codes.push({
+  // 新增卡密到内存
+  CONFIG.CODE_LIST.push({
     code,
     remaining: times,
     total: times,
     expiresAt: expiresAt.toISOString()
   });
-  await saveCodeStore(codes);
   return { success: true, msg: `新增卡密【${code}】成功！` };
 }
 
 async function updateCodeRemaining(code, new_times) {
-  const codes = await readCodeStore();
-  const codeObj = codes.find(c => c.code === code);
+  const codeObj = CONFIG.CODE_LIST.find(c => c.code === code);
   if (!codeObj) return { success: false, msg: '卡密不存在！' };
   
+  // 修改内存中的次数
   codeObj.remaining = new_times;
-  await saveCodeStore(codes);
   return { success: true, msg: `卡密【${code}】次数已改为${new_times}！` };
 }
 
 async function queryAllCodes() {
-  const codes = await readCodeStore();
-  return codes.map(item => ({
+  // 直接从内存读取卡密列表
+  return CONFIG.CODE_LIST.map(item => ({
     code: item.code,
     remaining: item.remaining,
     total: item.total,
@@ -413,12 +393,12 @@ async function get_emails(access_token, mailbox, returnRaw = false) {
   }
 }
 
-// ===================== 主入口（修改核心：双触发管理页面，兼容所有路由）=====================
+// ===================== 主入口（双触发管理页面，无文件读写）=====================
 module.exports = async (req, res) => {
   try {
-    // 👉 两种访问方式（任选一种，都能打开管理页面，彻底解决404）
-    // 方式1：路径触发（原方式）：https://xiaoheifk.cn/api/xiaohei/manage-codes
-    // 方式2：参数触发（新增，兼容性更强）：https://xiaoheifk.cn/api/xiaohei?manage-page=1
+    // 👉 两种访问方式（任选一种，必打开管理页面）
+    // 方式1：参数触发（推荐）：https://xiaoheifk.cn/api/xiaohei?manage-page=1
+    // 方式2：路径触发（备用）：https://xiaoheifk.cn/api/xiaohei/manage-codes
     const isManagePage = req.path === '/manage-codes' || req.query[CONFIG.MANAGE_TRIGGER] === '1';
     
     if (isManagePage) {
