@@ -1,670 +1,803 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>微软可视api号批量便捷取邮件工具：技术小黑：QQ：113575320</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  
-  <!-- 配置Tailwind自定义主题 -->
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#165DFF',
-            secondary: '#36BFFA',
-            neutral: '#F5F7FA',
-            dark: '#1D2129',
-          },
-          fontFamily: {
-            inter: ['Inter', 'system-ui', 'sans-serif'],
-          },
-        },
-      }
-    }
-  </script>
-  
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .content-auto {
-        content-visibility: auto;
-      }
-      .mail-item-hover {
-        @apply transition-all duration-300 hover:bg-neutral hover:shadow-md;
-      }
-      .btn-primary {
-        @apply bg-primary text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-primary/90 hover:shadow-lg active:scale-95;
-      }
-      .btn-secondary {
-        @apply bg-white text-primary border border-primary px-4 py-2 rounded-lg transition-all duration-300 hover:bg-primary/5 hover:shadow-md active:scale-95;
-      }
-      .copy-btn {
-        @apply bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm transition-all duration-200 hover:bg-gray-200;
-      }
-      .btn-purchase {
-        @apply bg-orange-500 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-orange-600 hover:shadow-lg active:scale-95;
-      }
-      .error-message {
-        @apply text-red-500 text-sm mt-2;
-      }
-      .temp-copy-input {
-        @apply absolute opacity-0 pointer-events-none;
-      }
-      .extra-info {
-        @apply text-xs text-gray-500 bg-gray-50 p-2 rounded mt-2 break-all;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微软邮箱API生成工具-小黑技术QQ：113575320</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#722ED1',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        dark: {
+                            1: '#1D1D1F',
+                            2: '#27272A',
+                            3: '#3F3F46',
+                            4: '#52525B',
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .btn-gradient { background-image: linear-gradient(135deg, var(--tw-gradient-stops)); }
+            .card-hover { transition: all 0.3s ease; }
+            .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+            .animate-shake { animation: shake 0.5s ease-in-out; }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        }
+    </style>
 </head>
-<body class="font-inter bg-gray-50 min-h-screen flex flex-col">
-  <!-- 顶部导航 -->
-  <header class="bg-white shadow-sm py-4 px-6 md:px-12">
-    <div class="container mx-auto flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa fa-envelope-o text-primary text-2xl"></i>
-        <h1 class="text-xl md:text-2xl font-bold text-dark">微软可视api号批量便捷取邮件工具：技术小黑：QQ：113575320</h1>
-      </div>
-      <div class="text-sm text-gray-500">
-        <span id="file-info" class="hidden">未选择文件</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- 主要内容区 -->
-  <main class="flex-grow container mx-auto px-4 py-8 md:px-8 md:py-12">
-    <!-- 导入区域 -->
-    <section class="mb-10 bg-white rounded-xl shadow-sm p-6 md:p-8">
-      <h2 class="text-lg md:text-xl font-semibold mb-4 flex items-center">
-        <i class="fa fa-upload text-primary mr-2"></i>导入邮箱文件
-      </h2>
-      <p class="text-gray-500 mb-6">请导入TXT文件，格式要求：每行一个条目，格式为【邮箱地址----密码----API链接----[额外标识1]----[额外标识2]...】（支持多段额外标识）</p>
-      
-      <!-- 格式示例说明 -->
-      <div class="bg-neutral p-3 rounded-lg mb-6 text-sm">
-        <p class="text-gray-600 font-medium mb-1">格式示例：</p>
-        <p class="text-gray-500">example@outlook.com----password123----https://api.example.com/mail----标识1----长字符串标识...</p>
-      </div>
-      
-      <div class="flex flex-col sm:flex-row gap-4">
-        <label for="file-upload" class="btn-primary flex items-center justify-center cursor-pointer">
-          <i class="fa fa-file-text-o mr-2"></i>选择TXT文件
-        </label>
-        <input id="file-upload" type="file" accept=".txt" class="hidden" />
-        
-        <button id="clear-btn" class="btn-secondary flex items-center justify-center">
-          <i class="fa fa-trash-o mr-2"></i>清空列表
-        </button>
-        
-        <a href="https://www.qianxun1688.com/links/1CDFE3FC" target="_blank" class="btn-purchase flex items-center justify-center">
-          <i class="fa fa-shopping-cart mr-2"></i>购买长效邮箱
-        </a>
-      </div>
-      
-      <!-- 错误信息显示区域 -->
-      <div id="error-container" class="hidden error-message"></div>
-      <div id="upload-status" class="mt-4 hidden"></div>
-    </section>
-    
-    <!-- 邮箱列表区域 -->
-    <section class="bg-white rounded-xl shadow-sm p-6 md:p-8">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-lg md:text-xl font-semibold flex items-center">
-          <i class="fa fa-list-alt text-primary mr-2"></i>邮箱列表
-        </h2>
-        <span id="email-count" class="text-sm bg-neutral px-3 py-1 rounded-full text-gray-600">0 个邮箱</span>
-      </div>
-      
-      <div id="email-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-        <!-- 邮箱列表将在这里动态生成 -->
-        <div class="text-center text-gray-500 py-12">
-          <i class="fa fa-envelope-open-o text-4xl mb-4 opacity-30"></i>
-          <p>请导入符合格式的TXT文件</p>
-          <p class="text-xs mt-2 text-gray-400">格式示例：邮箱地址----密码----API链接----[额外标识1]----[额外标识2]...</p>
+<body class="bg-dark-1 text-gray-200 font-inter min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <nav class="bg-dark-2 border-b border-dark-3 py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-envelope text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-white">微软邮箱API生成工具-小黑技术QQ：113575320</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="licenseBtn" class="text-sm px-4 py-2 rounded-lg bg-dark-3 hover:bg-dark-4 transition-colors">
+                    <i class="fa fa-key mr-1"></i> 授权状态
+                </button>
+                <button id="helpBtn" class="text-sm px-4 py-2 rounded-lg bg-dark-3 hover:bg-dark-4 transition-colors">
+                    <i class="fa fa-question-circle mr-1"></i> 帮助
+                </button>
+            </div>
         </div>
-      </div>
-    </section>
-  </main>
+    </nav>
 
-  <!-- 页脚 -->
-  <footer class="bg-white border-t border-gray-200 py-4 px-6">
-    <div class="container mx-auto text-center text-sm text-gray-500">
-      <p>本微软可视api号批量便捷取邮件工具由技术小黑提供：QQ：113575320 &copy; 2025</p>
-    </div>
-  </footer>
-
-  <!-- 用于复制的临时输入框 -->
-  <input type="text" id="temp-copy-input" class="temp-copy-input" />
-  
-  <!-- 通知提示组件 -->
-  <div id="toast" class="fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center"></div>
-
-  <script>
-    // DOM元素
-    const fileUpload = document.getElementById('file-upload');
-    const clearBtn = document.getElementById('clear-btn');
-    const emailList = document.getElementById('email-list');
-    const emailCount = document.getElementById('email-count');
-    const fileInfo = document.getElementById('file-info');
-    const uploadStatus = document.getElementById('upload-status');
-    const toast = document.getElementById('toast');
-    const errorContainer = document.getElementById('error-container');
-    const tempCopyInput = document.getElementById('temp-copy-input');
-    
-    // 邮箱服务商域名映射表
-    const emailProviders = {
-      'gmail.com': 'https://mail.google.com',
-      'outlook.com': 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?scope=service%3A%3Aaccount.microsoft.com%3A%3AMBI_SSL+openid+profile+offline_access&response_type=code&client_id=81feaced-5ddd-41e7-8bef-3e20a2689bb7&redirect_uri=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin-oauth&client-request-id=7b51c933-c267-4b7b-a954-72192bef7a52&x-client-SKU=MSAL.Desktop&x-client-Ver=4.66.1.0&x-client-OS=Windows+Server+2019+Datacenter&prompt=login&client_info=1&state=H4sIAAAAAAAEAA3LyYJDMAAA0H_p1YEa62EO9iLGaKjl1hStCGqJ4utn3v2d_H5XFz-xv4zsheK2r4is-mS9cIOiKMJrNaLm8HCOkz7-7EgeR0cB-IY8ZuEfWvZDu9Rwq04Ts56NtOcBmGeltxk5H3MlI-i1XUGKS-RetnEyxl9NiogH3kE-inlS4K3Q0ylkbKXtj6kcTCA4s2WxC5fecdn51OMYOi0ksJt0h-wiqEUX15Cbt6D7Dyg5ip5XtfvNkdfYX4hOro90q22KuHnuVhdwUvoJI6r3lmlmQpnSA8YNtF7eTCKFkaa82Pi7h1Ym9qFfWniXirEedz7M5s-m1vRrAgfKkwcL3EjjPwNXQwzmKxZDnTpnxDFEGHHarLDd6PnIift8x0IZTUAcmqspwVWWUOOQ4NYMVAi-T3_3_3fdbgEAAA&msaoauth2=true&lc=2052',
-      'hotmail.com': 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?scope=service%3A%3Aaccount.microsoft.com%3A%3AMBI_SSL+openid+profile+offline_access&response_type=code&client_id=81feaced-5ddd-41e7-8bef-3e20a2689bb7&redirect_uri=https%3A%2F%2Faccount.microsoft.com%2Fauth%2Fcomplete-signin-oauth&client-request-id=7b51c933-c267-4b7b-a954-72192bef7a52&x-client-SKU=MSAL.Desktop&x-client-Ver=4.66.1.0&x-client-OS=Windows+Server+2019+Datacenter&prompt=login&client_info=1&state=H4sIAAAAAAAEAA3LyYJDMAAA0H_p1YEa62EO9iLGaKjl1hStCGqJ4utn3v2d_H5XFz-xv4zsheK2r4is-mS9cIOiKMJrNaLm8HCOkz7-7EgeR0cB-IY8ZuEfWvZDu9Rwq04Ts56NtOcBmGeltxk5H3MlI-i1XUGKS-RetnEyxl9NiogH3kE-inlS4K3Q0ylkbKXtj6kcTCA4s2WxC5fecdn51OMYOi0ksJt0h-wiqEUX15Cbt6D7Dyg5ip5XtfvNkdfYX4hOro90q22KuHnuVhdwUvoJI6r3lmlmQpnSA8YNtF7eTCKFkaa82Pi7h1Ym9qFfWniXirEedz7M5s-m1vRrAgfKkwcL3EjjPwNXQwzmKxZDnTpnxDFEGHHarLDd6PnIift8x0IZTUAcmqspwVWWUOOQ4NYMVAi-T3_3_3fdbgEAAA&msaoauth2=true&lc=2052',
-      'yahoo.com': 'https://mail.yahoo.com',
-      'qq.com': 'https://mail.qq.com',
-      '163.com': 'https://mail.163.com',
-      '126.com': 'https://mail.126.com',
-      'sina.com': 'https://mail.sina.com.cn',
-      'sohu.com': 'https://mail.sohu.com',
-      '139.com': 'https://mail.10086.cn',
-      'yeah.net': 'https://www.yeah.net',
-      'foxmail.com': 'https://mail.qq.com'
-    };
-    
-    // 显示通知提示
-    function showToast(message, isError = false) {
-      toast.textContent = message;
-      toast.className = `fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 flex items-center ${
-        isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
-      }`;
-      
-      setTimeout(() => {
-        toast.className = 'fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center';
-      }, 3000);
-    }
-    
-    // 显示错误信息
-    function showError(message) {
-      errorContainer.textContent = message;
-      errorContainer.classList.remove('hidden');
-      
-      setTimeout(() => {
-        errorContainer.classList.add('hidden');
-      }, 5000);
-    }
-    
-    // 清除错误信息
-    function clearError() {
-      errorContainer.classList.add('hidden');
-    }
-    
-    // 解析邮箱并获取对应的邮件链接
-    function getEmailUrl(email) {
-      try {
-        const domain = email.split('@')[1];
-        return emailProviders[domain] || `https://${domain}`;
-      } catch (error) {
-        console.error('解析邮箱链接失败:', error);
-        return '#';
-      }
-    }
-    
-    // 验证邮箱格式
-    function isValidEmail(email) {
-      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return re.test(email);
-    }
-    
-    // 解析单行内容（支持多段额外标识：邮箱----密码----链接----[额外标识1]----[额外标识2]...）
-    function parseEmailLine(line, lineNumber) {
-      try {
-        const trimmedLine = line.trim();
-        if (!trimmedLine) {
-          return {
-            lineNumber,
-            originalLine: line,
-            isValid: false,
-            error: '空行'
-          };
-        }
-        
-        const parts = trimmedLine.split('----')
-          .map(part => part.trim())
-          .filter(part => part);
-        
-        // 核心信息至少需要3段（邮箱、密码、链接）
-        if (parts.length < 3) {
-          return {
-            lineNumber,
-            originalLine: line,
-            isValid: false,
-            error: `格式错误，至少需要3个部分（邮箱----密码----链接），实际得到${parts.length}个部分`
-          };
-        }
-        
-        const email = parts[0];
-        const password = parts[1];
-        const apiUrl = parts[2];
-        // 收集所有额外标识（从第4段开始）
-        const extraInfo = parts.slice(3);
-        
-        if (!isValidEmail(email)) {
-          return {
-            lineNumber,
-            originalLine: line,
-            isValid: false,
-            error: '邮箱格式不正确'
-          };
-        }
-        
-        if (!password) {
-          return {
-            lineNumber,
-            originalLine: line,
-            isValid: false,
-            error: '密码不能为空'
-          };
-        }
-        
-        if (!apiUrl || !apiUrl.startsWith('http')) {
-          return {
-            lineNumber,
-            originalLine: line,
-            isValid: false,
-            error: 'API链接格式不正确'
-          };
-        }
-        
-        return {
-          lineNumber,
-          email,
-          password,
-          apiUrl,
-          extraInfo, // 存储所有额外标识
-          isValid: true
-        };
-      } catch (error) {
-        console.error(`解析行 ${lineNumber} 失败:`, error);
-        return {
-          lineNumber,
-          originalLine: line,
-          isValid: false,
-          error: '解析过程中发生错误'
-        };
-      }
-    }
-    
-    // 复制到剪贴板
-    function copyToClipboard(text, successMessage) {
-      if (navigator.clipboard) {
-        return navigator.clipboard.writeText(text)
-          .then(() => {
-            showToast(successMessage);
-            return true;
-          })
-          .catch(err => {
-            console.warn('Clipboard API 失败，尝试降级方案:', err);
-            return fallbackCopy(text, successMessage);
-          });
-      }
-      return fallbackCopy(text, successMessage);
-    }
-    
-    // 复制降级方案
-    function fallbackCopy(text, successMessage) {
-      try {
-        tempCopyInput.value = text;
-        tempCopyInput.select();
-        tempCopyInput.setSelectionRange(0, text.length);
-        
-        const successful = document.execCommand('copy');
-        if (successful) {
-          showToast(successMessage);
-          return true;
-        } else {
-          throw new Error('execCommand 复制失败');
-        }
-      } catch (err) {
-        console.error('所有复制方案均失败:', err);
-        showToast(`复制失败，请手动复制: ${text}`, true);
-        return false;
-      } finally {
-        window.getSelection().removeAllRanges();
-      }
-    }
-    
-    // 渲染邮箱列表（显示额外标识）
-    function renderEmailList(emailItems) {
-      try {
-        emailList.innerHTML = '';
-        
-        if (emailItems.length === 0) {
-          emailList.innerHTML = `
-            <div class="text-center text-gray-500 py-12">
-              <i class="fa fa-envelope-open-o text-4xl mb-4 opacity-30"></i>
-              <p>请导入符合格式的TXT文件</p>
-              <p class="text-xs mt-2 text-gray-400">格式示例：邮箱地址----密码----API链接----[额外标识1]----[额外标识2]...</p>
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 卡密模态框 -->
+        <div id="licenseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-dark-2 rounded-xl p-6 w-full max-w-md card-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white">软件授权</h3>
+                    <button id="closeLicenseModal" class="text-gray-400 hover:text-white">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label for="licenseKey" class="block text-sm text-gray-300 mb-2">请输入授权卡密</label>
+                    <input type="text" id="licenseKey" class="w-full px-4 py-2 bg-dark-3 border border-dark-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-white">
+                </div>
+                <div id="licenseStatus" class="mb-4 text-sm text-danger hidden"></div>
+                <div class="flex space-x-2">
+                    <button id="validateLicenseBtn" class="flex-1 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:opacity-90 transition-opacity">
+                        <i class="fa fa-check mr-1"></i> 验证
+                    </button>
+                    <button id="cancelLicenseBtn" class="flex-1 px-4 py-2 bg-dark-3 text-gray-300 rounded-lg hover:bg-dark-4 transition-colors">
+                        取消
+                    </button>
+                </div>
             </div>
-          `;
-          emailCount.textContent = '0 个邮箱';
-          return;
-        }
-        
-        emailCount.textContent = `${emailItems.length} 个邮箱`;
-        
-        emailItems.forEach(item => {
-          const emailUrl = getEmailUrl(item.email);
-          const domain = item.email.split('@')[1] || '';
-          
-          const emailItem = document.createElement('div');
-          emailItem.className = 'flex flex-col p-4 border border-gray-100 rounded-lg mail-item-hover';
-          
-          // 构建额外标识HTML
-          let extraInfoHtml = '';
-          if (item.extraInfo && item.extraInfo.length > 0) {
-            item.extraInfo.forEach((info, index) => {
-              extraInfoHtml += `
-                <div class="extra-info">
-                  <span class="font-medium text-gray-600">额外标识 ${index + 1}：</span>
-                  <span>${info}</span>
-                  <button class="copy-btn ml-2" data-extra="${info}">
-                    <i class="fa fa-copy"></i> 复制
-                  </button>
+        </div>
+
+        <!-- 帮助模态框 -->
+        <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-dark-2 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto card-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white">使用帮助</h3>
+                    <button id="closeHelpModal" class="text-gray-400 hover:text-white">
+                        <i class="fa fa-times"></i>
+                    </button>
                 </div>
-              `;
-            });
-          }
-          
-          emailItem.innerHTML = `
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
-              <div class="flex items-center">
-                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
-                  <i class="fa fa-envelope-o"></i>
+                <div class="space-y-4 text-gray-300">
+                    <div>
+                        <h4 class="text-white font-semibold mb-2">1. 数据格式要求</h4>
+                        <p>每行一条数据，字段之间必须用 <code class="bg-dark-3 px-1 rounded">----</code> 分隔，顺序如下：</p>
+                        <div class="bg-dark-3 p-3 rounded-lg text-sm my-2 font-mono">
+                            邮箱地址----密码----client_id----refresh_token
+                        </div>
+                        <p><strong>注意：</strong>生成API链接时，将使用下方“自定义邮箱密码”输入框中的值，而不是此处填写的密码。</p>
+                        <p>示例：</p>
+                        <div class="bg-dark-3 p-3 rounded-lg text-sm my-2 font-mono">
+                            XqppnhNttam@outlook.com----old_password----dbc8e03a-b00c-46bd-ae65-b683e7707cb0----M.C554_SN1.0.UzI1NiIsInR5cCI6IkpXVCJ9...
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold mb-2">2. 操作步骤</h4>
+                        <ol class="list-decimal list-inside space-y-1 pl-4">
+                            <li>在“自定义邮箱密码”输入框中填写最终需要的密码。</li>
+                            <li>在上方文本框粘贴数据（或上传TXT文件）。</li>
+                            <li>点击「生成链接」按钮。</li>
+                            <li>下方表格会显示生成的API链接，点击「访问api链接」可直接跳转。</li>
+                        </ol>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 操作区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- 数据输入区 -->
+            <div class="lg:col-span-2 bg-dark-2 rounded-xl p-6 card-hover">
+                <div class="flex items-center mb-4">
+                    <i class="fa fa-file-text-o text-primary mr-2"></i>
+                    <h2 class="text-lg font-bold text-white">数据导入</h2>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-300 mb-2">数据输入（每行一条，格式：邮箱----密码----client_id----refresh_token）</label>
+                    <div class="relative">
+                        <textarea id="dataInput" class="w-full h-64 px-4 py-3 bg-dark-3 border border-dark-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-white font-mono text-sm" placeholder="示例：
+XqppnhNttam@outlook.com----old_password----dbc8e03a-b00c-46bd-ae65-b683e7707cb0----M.C554_SN1.0.UzI1NiIsInR5cCI6IkpXVCJ9...
+test@outlook.com----old_password----abc123-def-4567-8901-ghijklmnopqr----M.C554_SN1.0.UzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+                        <button id="clearInputBtn" class="absolute top-2 right-2 text-gray-400 hover:text-white">
+                            <i class="fa fa-times-circle"></i> 清空
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 自定义邮箱密码输入框（用于生成API链接，不影响导出） -->
+                <div class="mb-4">
+                    <label for="customPassword" class="block text-sm text-gray-300 mb-2">自定义邮箱密码 <span class="text-danger">*</span> （生成链接时会使用此密码）</label>
+                    <input type="text" id="customPassword" class="w-full px-4 py-2 bg-dark-3 border border-dark-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-white" placeholder="在此输入密码请联系小黑" value="">
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <label class="block text-sm text-gray-300 mb-2">文件上传（仅支持TXT）</label>
+                        <div class="flex items-center">
+                            <label for="fileUpload" class="flex-1 px-4 py-2 bg-dark-3 border border-dark-4 border-dashed rounded-lg text-center cursor-pointer hover:bg-dark-4 transition-colors">
+                                <i class="fa fa-upload mr-1"></i> 选择TXT文件
+                            </label>
+                            <input type="file" id="fileUpload" accept=".txt" class="hidden">
+                        </div>
+                        <div id="fileInfo" class="mt-2 text-sm text-gray-400 hidden"></div>
+                    </div>
+                    <div class="sm:w-1/3">
+                        <label class="block text-sm text-gray-300 mb-2">操作</label>
+                        <button id="generateBtn" class="w-full px-4 py-2 bg-gradient-to-r from-success to-primary text-white rounded-lg hover:opacity-90 transition-opacity">
+                            <i class="fa fa-magic mr-1"></i> 生成链接
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-xs text-gray-500">
+                    <i class="fa fa-info-circle mr-1"></i> 提示：支持直接粘贴文本或上传TXT文件，每行一条数据，字段用"----"分隔
+                </div>
+            </div>
+            
+            <!-- 状态信息区 -->
+            <div class="bg-dark-2 rounded-xl p-6 card-hover">
+                <div class="flex items-center mb-4">
+                    <i class="fa fa-info-circle text-primary mr-2"></i>
+                    <h2 class="text-lg font-bold text-white">状态信息</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-dark-3 p-4 rounded-lg">
+                        <div class="text-sm text-gray-400 mb-1">授权状态</div>
+                        <div id="licenseStatusText" class="flex items-center">
+                            <i class="fa fa-circle text-danger mr-2 text-xs"></i>
+                            <span>未授权</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-dark-3 p-4 rounded-lg">
+                        <div class="text-sm text-gray-400 mb-1">数据统计</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="text-xs text-gray-500">总条数</div>
+                                <div id="totalCount" class="text-xl font-bold text-white">0</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500">成功生成</div>
+                                <div id="successCount" class="text-xl font-bold text-success">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-dark-3 p-4 rounded-lg">
+                        <div class="text-sm text-gray-400 mb-1">操作按钮</div>
+                        <div class="flex flex-col space-y-2">
+                            <button id="exportBtn" class="w-full px-4 py-2 bg-gradient-to-r from-secondary to-warning text-white rounded-lg hover:opacity-90 transition-opacity" disabled>
+                                <i class="fa fa-download mr-1"></i> 导出链接
+                            </button>
+                            <button id="clearAllBtn" class="w-full px-4 py-2 bg-dark-4 text-gray-300 rounded-lg hover:bg-dark-5 transition-colors">
+                                <i class="fa fa-trash mr-1"></i> 清空所有
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据列表区 -->
+        <div class="bg-dark-2 rounded-xl p-6 card-hover">
+            <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center">
-                  <p class="text-dark font-medium break-all">${item.email}</p>
-                  <button class="copy-btn ml-2" data-email="${item.email}">
-                    <i class="fa fa-copy"></i> 复制邮箱
-                  </button>
+                    <i class="fa fa-table text-primary mr-2"></i>
+                    <h2 class="text-lg font-bold text-white">API链接列表</h2>
                 </div>
-              </div>
-              
-              <div class="flex gap-2 self-end sm:self-auto">
-                <button class="login-btn btn-secondary text-sm flex items-center" 
-                        data-email="${item.email}" 
-                        data-login-url="${emailUrl}">
-                  <i class="fa fa-external-link mr-1"></i> 手动邮箱登录
-                </button>
-                <a href="${item.apiUrl}" target="_blank" class="btn-secondary text-sm flex items-center">
-                  <i class="fa fa-link mr-1"></i> 获取当前API邮件
-                </a>
-              </div>
+                <div class="relative">
+                    <input type="text" id="searchInput" class="pl-10 pr-4 py-2 bg-dark-3 border border-dark-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-white text-sm" placeholder="搜索邮箱/Client ID...">
+                    <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
             </div>
             
-            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
-              <div class="flex items-center">
-                <span class="text-sm text-gray-500 mr-2">密码：</span>
-                <span class="text-sm font-mono bg-gray-100 px-2 py-1 rounded truncate max-w-[200px]">${item.password}</span>
-                <button class="copy-btn ml-2" data-password="${item.password}">
-                  <i class="fa fa-copy"></i> 复制
-                </button>
-              </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[800px]">
+                    <thead>
+                        <tr class="border-b border-dark-3">
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">操作</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">序号</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">邮箱地址</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Client ID</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">API链接</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <tr class="border-b border-dark-3">
+                            <td colspan="5" class="py-10 text-center text-gray-500">
+                                <i class="fa fa-folder-open-o text-4xl mb-2 block opacity-20"></i>
+                                暂无数据，请导入并生成链接
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             
-            <!-- 额外标识区域 -->
-            ${extraInfoHtml}
-          `;
-          
-          emailList.appendChild(emailItem);
-        });
-        
-        // 绑定复制事件
-        document.querySelectorAll('.copy-btn[data-password]').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const password = this.getAttribute('data-password');
-            copyToClipboard(password, '密码已复制');
-          });
-        });
-        
-        document.querySelectorAll('.copy-btn[data-email]').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const email = this.getAttribute('data-email');
-            copyToClipboard(email, '邮箱已复制');
-          });
-        });
-        
-        // 额外标识复制功能
-        document.querySelectorAll('.copy-btn[data-extra]').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const extraInfo = this.getAttribute('data-extra');
-            copyToClipboard(extraInfo, '额外标识已复制');
-          });
-        });
-        
-        // 登录按钮功能
-        document.querySelectorAll('.login-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const email = this.getAttribute('data-email');
-            const loginUrl = this.getAttribute('data-login-url');
-            
-            copyToClipboard(email, `邮箱已复制，即将跳转到登录页面`).then(success => {
-              if (success) {
-                setTimeout(() => {
-                  window.open(loginUrl, '_blank');
-                }, 800);
-              } else {
-                window.open(loginUrl, '_blank');
-              }
-            });
-          });
-        });
-        
-      } catch (error) {
-        console.error('渲染邮箱列表失败:', error);
-        showToast('显示邮箱列表时发生错误', true);
-      }
-    }
-    
-    // 处理文件上传
-    fileUpload.addEventListener('change', (e) => {
-      try {
-        clearError();
-        const files = e.target.files;
-        if (!files || files.length === 0) {
-          showError('未选择任何文件');
-          return;
-        }
-        
-        const file = files[0];
-        
-        if (!file.name.endsWith('.txt')) {
-          showError('请上传TXT格式的文件');
-          fileUpload.value = '';
-          return;
-        }
-        
-        if (file.size > 10 * 1024 * 1024) {
-          showError('文件过大，请上传10MB以内的TXT文件');
-          fileUpload.value = '';
-          return;
-        }
-        
-        fileInfo.textContent = `已选择: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`;
-        fileInfo.classList.remove('hidden');
-        
-        const reader = new FileReader();
-        
-        reader.onloadstart = () => {
-          uploadStatus.textContent = '正在解析文件...';
-          uploadStatus.className = 'mt-4 text-blue-500';
-          uploadStatus.classList.remove('hidden');
+            <!-- 分页 -->
+            <div class="flex justify-between items-center mt-4">
+                <div class="text-sm text-gray-400">
+                    显示 <span id="currentPageInfo">0</span> 条数据（共 <span id="totalDataCount">0</span> 条）
+                </div>
+                <div class="flex space-x-1">
+                    <button id="prevPageBtn" class="px-3 py-1 bg-dark-3 text-gray-300 rounded hover:bg-dark-4 transition-colors" disabled>
+                        <i class="fa fa-chevron-left text-xs"></i> 上一页
+                    </button>
+                    <button id="nextPageBtn" class="px-3 py-1 bg-dark-3 text-gray-300 rounded hover:bg-dark-4 transition-colors" disabled>
+                        下一页 <i class="fa fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark-2 border-t border-dark-3 py-4 px-6">
+        <div class="container mx-auto text-center text-gray-500 text-sm">
+            <p>© 2025 微软邮箱API生成工具-小黑技术QQ：113575320 | 联系方式：VX:HZQDS888 | QQ：113575320</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // API配置
+        const API_CONFIG = {
+            domain: "https://xiaoheifk.cn/api/mail-new",
         };
         
-        reader.onload = (event) => {
-          try {
-            const content = event.target.result;
-            const lines = content.split(/\r\n|\r|\n/);
+        // 全局状态
+        const state = {
+            isLicensed: false,
+            licenseInfo: null,
+            dataList: [],
+            filteredData: [],
+            currentPage: 1,
+            pageSize: 10,
+            selectedFile: null
+        };
+        
+        // DOM元素
+        const elements = {
+            // 模态框
+            licenseModal: document.getElementById('licenseModal'),
+            licenseKey: document.getElementById('licenseKey'),
+            licenseStatus: document.getElementById('licenseStatus'),
+            validateLicenseBtn: document.getElementById('validateLicenseBtn'),
+            closeLicenseModal: document.getElementById('closeLicenseModal'),
+            cancelLicenseBtn: document.getElementById('cancelLicenseBtn'),
+            licenseBtn: document.getElementById('licenseBtn'),
+            licenseStatusText: document.getElementById('licenseStatusText'),
             
-            if (lines.length === 0) {
-              uploadStatus.textContent = '文件内容为空';
-              uploadStatus.className = 'mt-4 text-yellow-500';
-              showToast('文件内容为空', true);
-              return;
+            helpModal: document.getElementById('helpModal'),
+            closeHelpModal: document.getElementById('closeHelpModal'),
+            helpBtn: document.getElementById('helpBtn'),
+            
+            // 数据输入
+            dataInput: document.getElementById('dataInput'),
+            customPassword: document.getElementById('customPassword'),
+            fileUpload: document.getElementById('fileUpload'),
+            fileInfo: document.getElementById('fileInfo'),
+            clearInputBtn: document.getElementById('clearInputBtn'),
+            
+            // 按钮
+            generateBtn: document.getElementById('generateBtn'),
+            exportBtn: document.getElementById('exportBtn'),
+            clearAllBtn: document.getElementById('clearAllBtn'),
+            
+            // 数据列表
+            dataTableBody: document.getElementById('dataTableBody'),
+            searchInput: document.getElementById('searchInput'),
+            currentPageInfo: document.getElementById('currentPageInfo'),
+            totalDataCount: document.getElementById('totalDataCount'),
+            prevPageBtn: document.getElementById('prevPageBtn'),
+            nextPageBtn: document.getElementById('nextPageBtn'),
+            
+            // 统计信息
+            totalCount: document.getElementById('totalCount'),
+            successCount: document.getElementById('successCount')
+        };
+        
+        // 卡密管理类
+        class LicenseManager {
+            constructor() {
+                this.ENCRYPT_KEY = "email_api_secure_key_123";
+                this.loadLicense();
             }
             
-            const validItems = [];
-            const invalidLines = [];
+            loadLicense() {
+                const savedLicense = localStorage.getItem('license');
+                if (savedLicense) {
+                    try {
+                        const licenseData = JSON.parse(savedLicense);
+                        const [valid, message] = this.validateLicense(licenseData.key);
+                        if (valid) {
+                            state.isLicensed = true;
+                            state.licenseInfo = { key: licenseData.key, message: message };
+                            this.updateLicenseStatus();
+                        }
+                    } catch (e) {
+                        console.error('Failed to load license:', e);
+                        localStorage.removeItem('license');
+                    }
+                }
+            }
             
-            lines.forEach((line, index) => {
-              const lineNumber = index + 1;
-              const result = parseEmailLine(line, lineNumber);
-              
-              if (result.isValid) {
-                validItems.push(result);
-              } else {
-                invalidLines.push({
-                  lineNumber,
-                  error: result.error,
-                  content: line
+            validateLicense(licenseKey) {
+                try {
+                    const cleanKey = licenseKey.replace(/-/g, '');
+                    const decrypted = this._decrypt(cleanKey);
+                    const parts = decrypted.split('-');
+                    if (parts.length !== 2) return [false, "无效的卡密格式"];
+                    
+                    const [_, expiryTimestamp] = parts;
+                    const expiryDate = new Date(parseInt(expiryTimestamp) * 1000);
+                    if (new Date() > expiryDate) return [false, `卡密已过期，有效期至: ${expiryDate.toLocaleDateString()}`];
+                    
+                    return [true, `卡密有效，有效期至: ${expiryDate.toLocaleDateString()}`];
+                } catch (e) {
+                    return [false, `验证失败: ${e.message}`];
+                }
+            }
+            
+            saveLicense(licenseKey) {
+                try {
+                    localStorage.setItem('license', JSON.stringify({ key: licenseKey, savedAt: new Date().toISOString() }));
+                    return true;
+                } catch (e) {
+                    console.error('Failed to save license:', e);
+                    return false;
+                }
+            }
+            
+            updateLicenseStatus() {
+                if (state.isLicensed && state.licenseInfo) {
+                    elements.licenseStatusText.innerHTML = `
+                        <i class="fa fa-circle text-success mr-2 text-xs"></i>
+                        <span>${state.licenseInfo.message}</span>
+                    `;
+                    elements.licenseBtn.innerHTML = `
+                        <i class="fa fa-check-circle mr-1 text-success"></i> 已授权
+                    `;
+                } else {
+                    elements.licenseStatusText.innerHTML = `
+                        <i class="fa fa-circle text-danger mr-2 text-xs"></i>
+                        <span>未授权</span>
+                    `;
+                    elements.licenseBtn.innerHTML = `
+                        <i class="fa fa-key mr-1"></i> 授权状态
+                    `;
+                }
+            }
+            
+            _decrypt(encryptedText) {
+                const decrypted = [];
+                const encryptedBytes = this._hexToBytes(encryptedText);
+                for (let i = 0; i < encryptedBytes.length; i++) {
+                    const keyByte = this.ENCRYPT_KEY.charCodeAt(i % this.ENCRYPT_KEY.length);
+                    const decryptedByte = encryptedBytes[i] ^ keyByte;
+                    decrypted.push(String.fromCharCode(decryptedByte));
+                }
+                return decrypted.join('');
+            }
+            
+            _hexToBytes(hex) {
+                const bytes = [];
+                for (let c = 0; c < hex.length; c += 2) {
+                    bytes.push(parseInt(hex.substr(c, 2), 16));
+                }
+                return bytes;
+            }
+        }
+        
+        // 初始化卡密管理器
+        const licenseManager = new LicenseManager();
+        
+        // 模态框操作
+        function showLicenseModal() {
+            if (state.isLicensed) {
+                alert('您已获得授权：' + state.licenseInfo.message);
+                return;
+            }
+            elements.licenseKey.value = '';
+            elements.licenseStatus.classList.add('hidden');
+            elements.licenseModal.classList.remove('hidden');
+            elements.licenseKey.focus();
+        }
+        
+        function hideLicenseModal() {
+            elements.licenseModal.classList.add('hidden');
+        }
+        
+        function showHelpModal() {
+            elements.helpModal.classList.remove('hidden');
+        }
+        
+        function hideHelpModal() {
+            elements.helpModal.classList.add('hidden');
+        }
+        
+        // 卡密验证
+        function validateLicense() {
+            const licenseKey = elements.licenseKey.value.trim();
+            if (!licenseKey) {
+                showLicenseError('请输入卡密');
+                return;
+            }
+            if (licenseKey.replace(/-/g, '').length < 40) {
+                showLicenseError('卡密格式不正确（长度不足）');
+                return;
+            }
+            const [valid, message] = licenseManager.validateLicense(licenseKey);
+            if (valid) {
+                licenseManager.saveLicense(licenseKey);
+                state.isLicensed = true;
+                state.licenseInfo = { key: licenseKey, message: message };
+                licenseManager.updateLicenseStatus();
+                hideLicenseModal();
+                alert('授权成功！' + message);
+            } else {
+                showLicenseError(message);
+            }
+        }
+        
+        function showLicenseError(message) {
+            elements.licenseStatus.textContent = message;
+            elements.licenseStatus.classList.remove('hidden');
+            elements.licenseKey.classList.add('animate-shake');
+            setTimeout(() => elements.licenseKey.classList.remove('animate-shake'), 500);
+        }
+        
+        // 文件上传处理
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+                alert('请上传TXT格式的文件');
+                elements.fileUpload.value = '';
+                return;
+            }
+            state.selectedFile = file;
+            elements.fileInfo.innerHTML = `
+                <i class="fa fa-file-text-o mr-1"></i> 
+                ${file.name} (${formatFileSize(file.size)})
+                <button id="removeFileBtn" class="ml-2 text-gray-500 hover:text-white">
+                    <i class="fa fa-times-circle"></i> 移除
+                </button>
+            `;
+            elements.fileInfo.classList.remove('hidden');
+            const reader = new FileReader();
+            reader.onload = (e) => elements.dataInput.value = e.target.result;
+            reader.readAsText(file, 'utf-8');
+            setTimeout(() => {
+                document.getElementById('removeFileBtn').addEventListener('click', () => {
+                    elements.fileUpload.value = '';
+                    elements.fileInfo.classList.add('hidden');
+                    state.selectedFile = null;
                 });
-              }
+            }, 100);
+        }
+        
+        // 文件大小格式化
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        // 核心：生成API链接（邮箱不编码）
+        function generateLinks() {
+            if (!state.isLicensed) {
+                alert('请先进行授权');
+                showLicenseModal();
+                return;
+            }
+
+            const inputText = elements.dataInput.value.trim();
+            if (!inputText) {
+                alert('请输入或上传数据');
+                return;
+            }
+
+            // 获取自定义密码（用于生成API链接）
+            const customPassword = elements.customPassword.value.trim();
+            if (!customPassword) {
+                alert('请在"自定义邮箱密码"输入框中填写密码');
+                elements.customPassword.focus();
+                return;
+            }
+
+            const lines = inputText.split('\n');
+            state.dataList = [];
+            const errorLines = [];
+
+            for (let idx = 0; idx < lines.length; idx++) {
+                const line = lines[idx].trim();
+                if (!line) continue;
+
+                // 检查是否为4个字段
+                const parts = line.split('----');
+                if (parts.length !== 4) {
+                    errorLines.push(idx + 1);
+                    continue;
+                }
+
+                // 提取原始数据（保留原始邮箱和原始密码，用于导出）
+                const [email, originalPassword, clientId, refreshToken] = parts.map(part => part.trim());
+                
+                if (!email || !originalPassword || !clientId || !refreshToken) {
+                    errorLines.push(idx + 1);
+                    continue;
+                }
+
+                // 对参数进行URL编码（仅client_id和password，邮箱不编码）
+                const encodedClientId = encodeURIComponent(clientId);
+                const encodedCustomPassword = encodeURIComponent(customPassword);
+
+                // 拼接API URL（邮箱直接使用原始格式，不编码）
+                const apiUrl = `${API_CONFIG.domain}?refresh_token=${refreshToken}&client_id=${encodedClientId}&email=${email}&mailbox=INBOX&response_type=html&password=${encodedCustomPassword}`;
+
+                // 存储结果（保留原始邮箱、原始密码，用于导出）
+                state.dataList.push({
+                    id: state.dataList.length + 1,
+                    email: email, // 原始邮箱（未编码，用于导出）
+                    originalPassword: originalPassword, // 原始导入密码（用于导出）
+                    clientId: clientId,
+                    refreshToken: refreshToken,
+                    apiUrl: apiUrl // 生成的API链接（邮箱未编码）
+                });
+            }
+
+            updateDataTable();
+            updateStats();
+
+            if (errorLines.length > 0) {
+                alert(`生成完成，但以下行格式错误（请检查是否为4个字段，用"----"分隔）：\n${errorLines.join(', ')}`);
+            } else {
+                alert(`成功生成 ${state.dataList.length} 条API链接`);
+            }
+        }
+        
+        // 更新数据表格
+        function updateDataTable() {
+            applySearch();
+            const startIndex = (state.currentPage - 1) * state.pageSize;
+            const endIndex = startIndex + state.pageSize;
+            const pageData = state.filteredData.slice(startIndex, endIndex);
+            elements.dataTableBody.innerHTML = '';
+
+            if (pageData.length === 0) {
+                elements.dataTableBody.innerHTML = `
+                    <tr class="border-b border-dark-3">
+                        <td colspan="5" class="py-10 text-center text-gray-500">
+                            <i class="fa fa-folder-open-o text-4xl mb-2 block opacity-20"></i>
+                            暂无数据
+                        </td>
+                    </tr>
+                `;
+            } else {
+                pageData.forEach((item) => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-dark-3 hover:bg-dark-3 transition-colors';
+                    row.innerHTML = `
+                        <td class="py-3 px-4">
+                            <a href="${item.apiUrl}" target="_blank" class="text-primary hover:text-secondary transition-colors">
+                                <i class="fa fa-external-link mr-1"></i> 访问api链接
+                            </a>
+                        </td>
+                        <td class="py-3 px-4">${item.id}</td>
+                        <td class="py-3 px-4">${item.email}</td>
+                        <td class="py-3 px-4">${item.clientId}</td>
+                        <td class="py-3 px-4">
+                            <div class="max-w-xs truncate" title="${item.apiUrl}">${item.apiUrl}</div>
+                        </td>
+                    `;
+                    elements.dataTableBody.appendChild(row);
+                });
+            }
+
+            updatePagination();
+        }
+        
+        // 搜索过滤
+        function applySearch() {
+            const searchTerm = elements.searchInput.value.toLowerCase().trim();
+            if (searchTerm) {
+                state.filteredData = state.dataList.filter(item => 
+                    item.email.toLowerCase().includes(searchTerm) ||
+                    item.clientId.toLowerCase().includes(searchTerm)
+                );
+            } else {
+                state.filteredData = [...state.dataList];
+            }
+            state.currentPage = 1;
+        }
+        
+        // 分页更新
+        function updatePagination() {
+            const totalPages = Math.ceil(state.filteredData.length / state.pageSize);
+            elements.currentPageInfo.textContent = state.filteredData.length;
+            elements.totalDataCount.textContent = state.dataList.length;
+            elements.prevPageBtn.disabled = state.currentPage <= 1;
+            elements.nextPageBtn.disabled = state.currentPage >= totalPages;
+            elements.prevPageBtn.classList.toggle('opacity-50', elements.prevPageBtn.disabled);
+            elements.prevPageBtn.classList.toggle('cursor-not-allowed', elements.prevPageBtn.disabled);
+            elements.nextPageBtn.classList.toggle('opacity-50', elements.nextPageBtn.disabled);
+            elements.nextPageBtn.classList.toggle('cursor-not-allowed', elements.nextPageBtn.disabled);
+        }
+        
+        // 统计信息更新
+        function updateStats() {
+            elements.totalCount.textContent = state.dataList.length;
+            elements.successCount.textContent = state.dataList.length;
+            elements.exportBtn.disabled = state.dataList.length === 0;
+            elements.exportBtn.classList.toggle('opacity-50', elements.exportBtn.disabled);
+            elements.exportBtn.classList.toggle('cursor-not-allowed', elements.exportBtn.disabled);
+        }
+        
+        // 导出链接 - 格式：邮箱----原始密码----API链接（保持邮箱@不变）
+        function exportLinks() {
+            if (state.dataList.length === 0) return;
+            
+            // 拼接原始邮箱、原始密码、API链接（均为原始格式，不编码）
+            const content = state.dataList.map(item => `${item.email}----${item.originalPassword}----${item.apiUrl}`).join('\n');
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `邮箱API链接_${today}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // 清空所有数据
+        function clearAllData() {
+            if (confirm('确定要清空所有数据吗？此操作不可恢复！')) {
+                elements.dataInput.value = '';
+                elements.customPassword.value = '';
+                elements.fileUpload.value = '';
+                elements.fileInfo.classList.add('hidden');
+                state.dataList = [];
+                state.filteredData = [];
+                state.currentPage = 1;
+                state.selectedFile = null;
+                updateDataTable();
+                updateStats();
+            }
+        }
+        
+        // 清空输入框
+        function clearInput() {
+            elements.dataInput.value = '';
+        }
+        
+        // 分页操作
+        function prevPage() {
+            if (state.currentPage > 1) {
+                state.currentPage--;
+                updateDataTable();
+            }
+        }
+        
+        function nextPage() {
+            const totalPages = Math.ceil(state.filteredData.length / state.pageSize);
+            if (state.currentPage < totalPages) {
+                state.currentPage++;
+                updateDataTable();
+            }
+        }
+        
+        // 初始化事件监听
+        function initEventListeners() {
+            // 模态框事件
+            elements.licenseBtn.addEventListener('click', showLicenseModal);
+            elements.closeLicenseModal.addEventListener('click', hideLicenseModal);
+            elements.cancelLicenseBtn.addEventListener('click', hideLicenseModal);
+            elements.validateLicenseBtn.addEventListener('click', validateLicense);
+            
+            elements.helpBtn.addEventListener('click', showHelpModal);
+            elements.closeHelpModal.addEventListener('click', hideHelpModal);
+            
+            // 文件上传事件
+            elements.fileUpload.addEventListener('change', handleFileUpload);
+            
+            // 按钮事件
+            elements.generateBtn.addEventListener('click', generateLinks);
+            elements.exportBtn.addEventListener('click', exportLinks);
+            elements.clearAllBtn.addEventListener('click', clearAllData);
+            elements.clearInputBtn.addEventListener('click', clearInput);
+            
+            // 分页事件
+            elements.prevPageBtn.addEventListener('click', prevPage);
+            elements.nextPageBtn.addEventListener('click', nextPage);
+            
+            // 搜索事件
+            elements.searchInput.addEventListener('input', () => {
+                applySearch();
+                updateDataTable();
             });
             
-            renderEmailList(validItems);
+            // 点击模态框外部关闭
+            elements.licenseModal.addEventListener('click', (e) => {
+                if (e.target === elements.licenseModal) hideLicenseModal();
+            });
+            elements.helpModal.addEventListener('click', (e) => {
+                if (e.target === elements.helpModal) hideHelpModal();
+            });
             
-            let statusText = `成功解析 ${validItems.length} 个有效条目`;
-            
-            if (invalidLines.length > 0) {
-              statusText += `，发现 ${invalidLines.length} 个无效行`;
-              
-              let errorDetails = '错误示例: ';
-              const displayErrors = invalidLines.slice(0, 3);
-              displayErrors.forEach(err => {
-                errorDetails += `第${err.lineNumber}行(${err.error}); `;
-              });
-              
-              if (invalidLines.length > 3) {
-                errorDetails += `还有${invalidLines.length - 3}个错误...`;
-              }
-              
-              showError(errorDetails);
+            // 键盘事件（ESC关闭模态框）
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    hideLicenseModal();
+                    hideHelpModal();
+                }
+            });
+        }
+        
+        // 初始化应用
+        function initApp() {
+            initEventListeners();
+            licenseManager.updateLicenseStatus();
+            if (!state.isLicensed) {
+                setTimeout(showLicenseModal, 1000);
             }
-            
-            uploadStatus.textContent = statusText;
-            uploadStatus.className = validItems.length > 0 
-              ? 'mt-4 text-green-500' 
-              : 'mt-4 text-red-500';
-            
-            showToast(`已导入 ${validItems.length} 个有效邮箱信息`);
-          } catch (error) {
-            console.error('处理文件内容失败:', error);
-            uploadStatus.textContent = '解析文件内容失败';
-            uploadStatus.className = 'mt-4 text-red-500';
-            showError('解析文件内容时发生错误: ' + error.message);
-          }
-        };
-        
-        reader.onerror = () => {
-          console.error('文件读取错误:', reader.error);
-          uploadStatus.textContent = '文件读取失败，请重试';
-          uploadStatus.className = 'mt-4 text-red-500';
-          showError('文件读取失败: ' + reader.error.message);
-        };
-        
-        reader.readAsText(file, 'UTF-8');
-      } catch (error) {
-        console.error('处理文件上传失败:', error);
-        showError('处理文件时发生错误: ' + error.message);
-      }
-    });
-    
-    // 清空列表
-    clearBtn.addEventListener('click', () => {
-      try {
-        fileUpload.value = '';
-        fileInfo.classList.add('hidden');
-        uploadStatus.classList.add('hidden');
-        clearError();
-        renderEmailList([]);
-        showToast('已清空邮箱列表');
-      } catch (error) {
-        console.error('清空列表失败:', error);
-        showToast('清空列表时发生错误', true);
-      }
-    });
-    
-    // 拖放功能
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      document.body.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    ['dragenter', 'dragover'].forEach(eventName => {
-      document.body.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-      document.body.addEventListener(eventName, unhighlight, false);
-    });
-    
-    function highlight() {
-      document.body.classList.add('bg-primary/5');
-    }
-    
-    function unhighlight() {
-      document.body.classList.remove('bg-primary/5');
-    }
-    
-    document.body.addEventListener('drop', handleDrop, false);
-    
-    function handleDrop(e) {
-      try {
-        clearError();
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        
-        if (!files || files.length === 0) {
-          showError('未检测到文件');
-          return;
         }
         
-        const file = files[0];
-        
-        if (!file.name.endsWith('.txt')) {
-          showError('请拖放TXT格式的文件');
-          return;
-        }
-        
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileUpload.files = dataTransfer.files;
-        
-        const event = new Event('change', { bubbles: true });
-        fileUpload.dispatchEvent(event);
-      } catch (error) {
-        console.error('处理拖放文件失败:', error);
-        showError('处理拖放文件时发生错误: ' + error.message);
-      }
-    }
-    
-    // 初始化检查
-    function checkBrowserSupport() {
-      if (!window.FileReader) {
-        showToast('您的浏览器不支持文件读取功能，请使用现代浏览器', true);
-        return false;
-      }
-      
-      if (navigator.userAgent.includes('Chrome') && window.location.protocol !== 'https:') {
-        showToast('注意：在非HTTPS环境下，复制功能可能受限', true);
-      }
-      
-      return true;
-    }
-    
-    window.addEventListener('DOMContentLoaded', () => {
-      checkBrowserSupport();
-    });
-  </script>
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
 </body>
 </html>
