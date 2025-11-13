@@ -2,30 +2,65 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小黑数据查重去重删除综合工具-技术QQ：113575320</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>小黑综合数据处理工具平台：技术支持QQ:113575320</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         primary: '#3B82F6',
+                        original: '#10B981',
+                        shuffled: '#F59E0B',
+                        result: '#8B5CF6',
                         secondary: '#10B981',
                         danger: '#EF4444',
-                        neutral: '#9CA3AF',
+                        neutral: '#64748B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC',
                         dataset1: '#3B82F6',
                         dataset2: '#10B981',
                     },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif']
+                    }
                 }
             }
         }
     </script>
+    
     <style type="text/tailwindcss">
         @layer utilities {
             .content-auto {
                 content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3),0 2px 4px -1px rgba(0,0,0,0.2);
+                background-color: #1f2937;
+                border: 1px solid #374151;
+            }
+            .btn-hover {
+                @apply transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5;
+            }
+            .file-input-label {
+                @apply cursor-pointer px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center;
+            }
+            .transition-height {
+                transition: max-height 0.3s ease-in-out;
+            }
+            .shadow-soft {
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            }
+            .tab-active {
+                @apply bg-primary text-white border-primary;
+            }
+            .tab-inactive {
+                @apply bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700;
             }
             .scrollbar-thin {
                 scrollbar-width: thin;
@@ -53,1190 +88,2616 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 min-h-screen font-sans text-gray-100">
-    <header class="bg-gray-800 shadow-md sticky top-0 z-10">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <!-- 左边标题区域 -->
-            <div class="flex items-center space-x-4">
-                <i class="fa fa-exchange text-primary text-2xl"></i>
-                <h1 class="text-xl font-bold text-white">小黑数据查重去重删除综合工具-技术QQ：113575320</h1>
-                <!-- 把购买按钮移到这里 -->
-                <a href="https://xiaoheifk.cn/" target="_blank" 
-                   class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-3 rounded-md transition flex items-center">
-                    <i class="fa fa-shopping-cart mr-1.5"></i>微软长效邮箱购买
-                </a>
-            </div>
-            <!-- 右上角区域 -->
-            <div class="flex items-center space-x-4">
-                <a href="https://xiaoheifk.cn/" target="_blank" class="text-sm text-neutral hover:text-white transition flex items-center">
-                    <i class="fa fa-question-circle mr-1"></i>操作帮助
-                </a>
-                <div class="text-sm text-neutral">
-                    技术支持QQ:113575320
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <main class="container mx-auto px-4 py-8">
-        <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-lg font-semibold mb-3 text-white">使用说明</h2>
-            <p class="text-gray-300 mb-4">
-                输入或导入两组数据后，可以导出每个数据集中的唯一行，导出内容将保留原始的整行格式。
-                支持自定义字段数量（字段之间使用"----"分隔）和保留范围（如输入 <code class="bg-gray-700 px-1 py-0.5 rounded">1-4</code> 保留前4个字段）。
-            </p>
-            <div class="bg-gray-700 p-4 rounded-md text-sm text-gray-300">
-                <p class="mb-2"><strong>示例格式：</strong></p>
-                <p>字段1----字段2----字段3----字段4----字段5----字段6----字段7</p>
-                <p>user@example.com----abc123----12345----admin----2023-01-01----data----info</p>
-                <p class="mt-2"><strong>保留范围示例：</strong>输入 <code class="bg-gray-600 px-1 py-0.5 rounded">2-5</code>，结果为：字段2----字段3----字段4----字段5</p>
-            </div>
+<body class="bg-gray-900 font-inter text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-primary mb-2">小黑综合数据处理工具平台</h1>
+            <p class="text-gray-400 mb-1">整合6大实用工具，支持邮箱处理、TXT拆分、密码转换、数据查重去重等功能</p>
+            <p class="text-gray-400 text-sm"><i class="fa fa-headphones mr-1"></i>技术支持：QQ/: 113575320</p>
+            <a href="https://xiaoheifk.cn/" target="_blank" 
+               class="inline-block mt-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-3 rounded-md transition flex items-center">
+                <i class="fa fa-shopping-cart mr-1.5"></i>微软长效邮箱购买
+            </a>
+        </header>
+        
+        <div class="flex flex-wrap justify-center gap-2 mb-8 border-b border-gray-700 pb-2">
+            <button class="tab-btn tab-active px-4 py-2 rounded-t-lg border font-medium transition-colors" data-tab="tab1">1. 邮箱数据排序工具</button>
+            <button class="tab-btn tab-inactive px-4 py-2 rounded-t-lg border font-medium transition-colors" data-tab="tab2">2. 邮箱数据分类工具</button>
+            <button class="tab-btn tab-inactive px-4 py-2 rounded-t-lg border font-medium transition-colors" data-tab="tab3">3. UUID与邮箱分类工具</button>
+            <button class="tab-btn tab-inactive px-4 py-2 rounded-t-lg border font-medium transition-colors" data-tab="tab4">4. TXT数据分档工具</button>
+            <button class="tab-btn tab-inactive px-4 py-2 rounded-t-lg border font-medium transition-colors" data-tab="tab5">5. 密码转换工具</button>
+            <button class="tab-btn tab-inactive px-4 py-2 rounded-t-lg border font-medium transition-colors" data-tab="tab6">6. 数据查重去重工具</button>
         </div>
         
-        <!-- 字段管理（新增保留范围设置） -->
-        <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-lg font-semibold mb-4 text-white flex items-center">
-                <i class="fa fa-cog text-primary mr-2"></i>字段与保留范围管理
-            </h2>
-            <div class="grid md:grid-cols-2 gap-6">
-                <!-- 字段数量设置 -->
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center">
-                        <label for="fieldCount" class="text-sm text-gray-300 mr-2">当前字段数：</label>
-                        <input type="number" id="fieldCount" min="1" max="20" value="4" 
-                               class="w-16 p-2 bg-gray-700 border border-gray-600 rounded text-gray-200">
-                    </div>
-                    <button id="updateFieldsBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition">
-                        <i class="fa fa-refresh mr-1"></i>更新字段
-                    </button>
-                    <div class="text-sm text-gray-400 ml-auto">
-                        提示：字段数最多支持20个
-                    </div>
-                </div>
-                <!-- 保留范围设置（新增） -->
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center">
-                        <label for="keepRange" class="text-sm text-gray-300 mr-2">保留字段范围：</label>
-                        <input type="text" id="keepRange" placeholder="1-4（默认保留所有）" value="1-4"
-                               class="w-24 p-2 bg-gray-700 border border-gray-600 rounded text-gray-200">
-                    </div>
-                    <button id="validateRangeBtn" class="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-md transition">
-                        <i class="fa fa-check mr-1"></i>验证范围
-                    </button>
-                    <div id="rangeError" class="text-sm text-danger hidden ml-2">
-                        格式错误（示例：1-4）
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                <div class="bg-dataset1/20 gradient-border from-dataset1 to-dataset1/70 px-6 py-3">
-                    <h2 class="font-semibold text-dataset1 flex items-center">
-                        <i class="fa fa-database mr-2"></i>数据集 A
-                    </h2>
-                </div>
-                <div class="p-6">
-                    <div class="flex justify-between mb-4">
-                        <div>
-                            <label for="dataset1File" class="cursor-pointer text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition inline-flex items-center">
-                                <i class="fa fa-upload mr-1"></i>导入文件
-                            </label>
-                            <input type="file" id="dataset1File" accept=".txt" class="hidden">
+        <!-- 标签1：邮箱数据排序工具 -->
+        <div class="tab-content" id="tab1">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 原数据 -->
+                <div class="rounded-xl p-5 card-shadow">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 rounded-full bg-original/20 flex items-center justify-center mr-3">
+                            <i class="fa fa-database text-original"></i>
                         </div>
-                        <button id="clearDataset1" class="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition">
+                        <h2 class="text-lg font-semibold">原数据（排序基准）</h2>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-3">每行输入一条数据，程序会提取邮箱作为排序基准</p>
+                    
+                    <div class="mb-3 flex gap-2">
+                        <label for="tab1-importOriginal" class="file-input-label bg-original/10 text-original hover:bg-original/20">
+                            <i class="fa fa-upload mr-1"></i>导入TXT
+                        </label>
+                        <input type="file" id="tab1-importOriginal" accept=".txt" class="hidden">
+                        
+                        <button id="tab1-clearOriginal" class="file-input-label border border-gray-600 text-gray-300 hover:bg-gray-700">
                             <i class="fa fa-trash-o mr-1"></i>清空
                         </button>
                     </div>
-                    <textarea 
-                        id="dataset1Input" 
-                        class="w-full h-64 p-3 border border-gray-700 bg-gray-900 rounded-md focus:ring-2 focus:ring-dataset1/50 focus:border-dataset1 outline-none resize-none scrollbar-thin text-gray-200"
-                        placeholder="请输入第一组数据，每行一条记录..."
-                        data-placeholder="拖入文本文件到此处"></textarea>
-                    <div class="mt-4 text-sm text-neutral">
-                        <span id="dataset1Count">0 条记录</span>
-                        <span id="dataset1RangeStatus" class="ml-3 text-secondary hidden">
-                            <i class="fa fa-check"></i> 范围有效（1-4）
-                        </span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                <div class="bg-dataset2/20 gradient-border from-dataset2 to-dataset2/70 px-6 py-3">
-                    <h2 class="font-semibold text-dataset2 flex items-center">
-                        <i class="fa fa-database mr-2"></i>数据集 B
-                    </h2>
-                </div>
-                <div class="p-6">
-                    <div class="flex justify-between mb-4">
-                        <div>
-                            <label for="dataset2File" class="cursor-pointer text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition inline-flex items-center">
-                                <i class="fa fa-upload mr-1"></i>导入文件
-                            </label>
-                            <input type="file" id="dataset2File" accept=".txt" class="hidden">
-                        </div>
-                        <button id="clearDataset2" class="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition">
-                            <i class="fa fa-trash-o mr-1"></i>清空
-                        </button>
-                    </div>
-                    <textarea 
-                        id="dataset2Input" 
-                        class="w-full h-64 p-3 border border-gray-700 bg-gray-900 rounded-md focus:ring-2 focus:ring-dataset2/50 focus:border-dataset2 outline-none resize-none scrollbar-thin text-gray-200"
-                        placeholder="请输入第二组数据，每行一条记录..."
-                        data-placeholder="拖入文本文件到此处"></textarea>
-                    <div class="mt-4 text-sm text-neutral">
-                        <span id="dataset2Count">0 条记录</span>
-                        <span id="dataset2RangeStatus" class="ml-3 text-secondary hidden">
-                            <i class="fa fa-check"></i> 范围有效（1-4）
-                        </span>
-                    </div>
-                </div>
-            </div>
-            
-            <div>
-                <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-                    <h2 class="text-lg font-semibold mb-4 text-white">查重设置</h2>
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-300 mb-2">选择查重字段：</label>
-                        <div id="fieldOptions" class="flex flex-wrap gap-2">
-                            <!-- 字段选项将动态生成 -->
-                        </div>
-                    </div>
-                    <button 
-                        id="compareBtn" 
-                        class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-md transition flex items-center justify-center">
-                        <i class="fa fa-exchange mr-2"></i>对比查重
-                    </button>
-                    <div class="mt-3 grid grid-cols-2 gap-3">
-                        <button 
-                            id="sampleBtn" 
-                            class="bg-gray-700 hover:bg-gray-600 text-neutral font-medium py-2 px-4 rounded-md transition flex items-center justify-center">
-                            <i class="fa fa-file-text-o mr-2"></i>示例数据
+                    
+                    <textarea id="tab1-originalData" rows="11" class="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-original/30 focus:border-original outline-none text-sm resize-none bg-gray-800 placeholder-gray-500" placeholder="请输入原数据，每行一条..."></textarea>
+                    
+                    <div class="mt-3 flex justify-between items-center">
+                        <span class="text-xs text-gray-400"><span id="tab1-originalCount">0</span> 条数据</span>
+                        <button id="tab1-exportOriginal" class="text-xs text-original hover:text-original/80 transition-colors">
+                            <i class="fa fa-download mr-1"></i>导出TXT
                         </button>
                     </div>
                 </div>
                 
-                <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-                    <h2 class="text-lg font-semibold mb-4 text-white">导出设置</h2>
-                    <div class="grid grid-cols-1 gap-3">
-                        <button 
-                            id="exportUniqueABtn" 
-                            class="w-full bg-dataset1 hover:bg-dataset1/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
-                            disabled>
-                            <i class="fa fa-download mr-2"></i>导出A唯一行（保留范围）
-                        </button>
-                        <button 
-                            id="exportUniqueBBtn" 
-                            class="w-full bg-dataset2 hover:bg-dataset2/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
-                            disabled>
-                            <i class="fa fa-download mr-2"></i>导出B唯一行（保留范围）
-                        </button>
-                        <button 
-                            id="exportDuplicatesBtn" 
-                            class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
-                            disabled>
-                            <i class="fa fa-download mr-2"></i>导出重复行（保留范围）
-                        </button>
-                        <!-- 原来的购买按钮从这里删掉了 -->
-                    </div>
-                </div>
-                
-                <div class="bg-gray-800 rounded-lg shadow-md p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold text-white">查重结果</h2>
-                        <span id="matchCount" class="text-sm px-2 py-1 bg-primary/20 text-primary rounded-full">
-                            等待对比...
-                        </span>
-                    </div>
-                    <div id="emptyResultState" class="py-12 text-center">
-                        <i class="fa fa-balance-scale text-4xl text-gray-600 mb-3"></i>
-                        <p class="text-gray-500">对比结果将显示在这里</p>
-                    </div>
-                    <div id="loadingResultState" class="py-12 text-center hidden">
-                        <i class="fa fa-spinner fa-spin text-4xl text-primary mb-3"></i>
-                        <p class="text-gray-500">正在对比数据...</p>
-                    </div>
-                    <div id="resultsContainer" class="max-h-64 overflow-y-auto scrollbar-thin hidden">
-                        <div id="noMatches" class="py-12 text-center hidden">
-                            <i class="fa fa-check-circle text-4xl text-secondary mb-3"></i>
-                            <p class="text-gray-500">未发现重复项</p>
+                <!-- 打乱数据 -->
+                <div class="rounded-xl p-5 card-shadow">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 rounded-full bg-shuffled/20 flex items-center justify-center mr-3">
+                            <i class="fa fa-random text-shuffled"></i>
                         </div>
-                        <div id="matchesList" class="space-y-4">
-                        </div>
+                        <h2 class="text-lg font-semibold">打乱数据（待排序）</h2>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="mt-8 bg-gray-800 rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-6 text-white flex items-center">
-                <i class="fa fa-filter text-primary mr-2"></i>单数据去重功能（支持保留范围）
-            </h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="md:col-span-2">
-                    <div class="flex justify-between mb-4">
-                        <div>
-                            <label for="dedupFile" class="cursor-pointer text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition inline-flex items-center">
-                                <i class="fa fa-upload mr-1"></i>导入文件
-                            </label>
-                            <input type="file" id="dedupFile" accept=".txt" class="hidden">
-                        </div>
-                        <button id="clearDedupInput" class="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition">
+                    <p class="text-sm text-gray-400 mb-3">每行输入一条数据，程序会根据邮箱与原数据匹配排序</p>
+                    
+                    <div class="mb-3 flex gap-2">
+                        <label for="tab1-importShuffled" class="file-input-label bg-shuffled/10 text-shuffled hover:bg-shuffled/20">
+                            <i class="fa fa-upload mr-1"></i>导入TXT
+                        </label>
+                        <input type="file" id="tab1-importShuffled" accept=".txt" class="hidden">
+                        
+                        <button id="tab1-clearShuffled" class="file-input-label border border-gray-600 text-gray-300 hover:bg-gray-700">
                             <i class="fa fa-trash-o mr-1"></i>清空
                         </button>
                     </div>
-                    <textarea 
-                        id="dedupInput" 
-                        class="w-full h-64 p-3 border border-gray-700 bg-gray-900 rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none resize-none scrollbar-thin text-gray-200"
-                        placeholder="请输入需要去重的数据，每行一条记录..."
-                        data-placeholder="拖入文本文件到此处"></textarea>
-                    <div class="mt-4 text-sm text-neutral">
-                        <span id="dedupCount">0 条记录</span>
-                        <span id="dedupRangeStatus" class="ml-3 text-secondary hidden">
-                            <i class="fa fa-check"></i> 范围有效（1-4）
-                        </span>
+                    
+                    <textarea id="tab1-shuffledData" rows="11" class="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-shuffled/30 focus:border-shuffled outline-none text-sm resize-none bg-gray-800 placeholder-gray-500" placeholder="请输入打乱的数据，每行一条..."></textarea>
+                    
+                    <div class="mt-3 flex justify-between items-center">
+                        <span class="text-xs text-gray-400"><span id="tab1-shuffledCount">0</span> 条数据</span>
+                        <button id="tab1-exportShuffled" class="text-xs text-shuffled hover:text-shuffled/80 transition-colors">
+                            <i class="fa fa-download mr-1"></i>导出TXT
+                        </button>
                     </div>
                 </div>
-                <div class="flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-lg font-medium mb-4 text-white">去重设置</h3>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">去重依据：</label>
-                            <div id="dedupFieldOptions" class="flex flex-wrap gap-2">
-                                <!-- 去重字段选项将动态生成 -->
-                            </div>
+                
+                <!-- 排序结果 -->
+                <div class="rounded-xl p-5 card-shadow">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 rounded-full bg-result/20 flex items-center justify-center mr-3">
+                            <i class="fa fa-sort-amount-asc text-result"></i>
                         </div>
-                        <button 
-                            id="dedupBtn" 
-                            class="w-full bg-secondary hover:bg-secondary/90 text-white font-medium py-3 px-4 rounded-md transition flex items-center justify-center">
-                            <i class="fa fa-filter mr-2"></i>执行去重（保留范围）
+                        <h2 class="text-lg font-semibold">排序结果</h2>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-3">按照原数据的邮箱顺序排序后的结果</p>
+                    
+                    <div id="tab1-resultContainer" class="w-full h-[calc(100%-4rem)] min-h-[220px] px-4 py-3 border border-gray-600 rounded-lg text-sm overflow-auto bg-gray-800">
+                        <div class="text-gray-500 flex flex-col items-center justify-center h-full">
+                            <i class="fa fa-file-text-o text-4xl mb-3 opacity-30"></i>
+                            <p>排序结果将显示在这里</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 flex justify-between items-center">
+                        <span class="text-xs text-gray-400"><span id="tab1-resultCount">0</span> 条数据</span>
+                        <button id="tab1-exportResult" class="text-xs text-result hover:text-result/80 transition-colors">
+                            <i class="fa fa-download mr-1"></i>导出TXT
                         </button>
                     </div>
-                    <div class="mt-6">
-                        <h3 class="text-lg font-medium mb-3 text-white">去重结果</h3>
-                        <div class="bg-gray-700 rounded-md p-3">
-                            <div class="flex justify-between mb-2">
-                                <span class="text-sm text-gray-300">原始记录数:</span>
-                                <span id="originalCount" class="text-sm font-medium text-white">0</span>
-                            </div>
-                            <div class="flex justify-between mb-2">
-                                <span class="text-sm text-gray-300">去重后记录数:</span>
-                                <span id="uniqueCount" class="text-sm font-medium text-white">0</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-sm text-gray-300">重复记录数:</span>
-                                <span id="duplicateCount" class="text-sm font-medium text-white">0</span>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mb-8">
+                <button id="tab1-sortButton" class="px-6 py-3 bg-primary text-white rounded-lg font-medium btn-hover flex items-center">
+                    <i class="fa fa-sort mr-2"></i>按原数据邮箱排序
+                </button>
+            </div>
+            
+            <div class="mt-8 rounded-xl p-5 card-shadow">
+                <h3 class="text-md font-semibold mb-4 flex items-center">
+                    <i class="fa fa-info-circle text-primary mr-2"></i>匹配信息
+                </h3>
+                <div id="tab1-matchInfo" class="text-sm text-gray-300">
+                    <p>请输入数据并点击排序按钮查看匹配信息</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 标签2：邮箱数据分类工具 -->
+        <div class="tab-content hidden" id="tab2">
+            <div class="header mb-6 text-center">
+                <h2 class="text-xl font-bold text-gray-100 mb-2">邮箱数据分类工具</h2>
+                <p class="text-gray-400">支持超大文件，按"首字母大小写+域名"分类，可批量导出或单独导出</p>
+            </div>
+            
+            <div class="upload-area rounded-xl p-5 card-shadow mb-8">
+                <label for="tab2-fileInput" class="upload-btn bg-primary text-white px-4 py-2 rounded-lg cursor-pointer inline-block">选择TXT文件</label>
+                <input type="file" id="tab2-fileInput" accept=".txt" class="hidden">
+                <div class="file-info text-gray-400 mt-3" id="tab2-fileInfo">未选择文件（每行1条数据，邮箱与内容用----分隔）</div>
+                <div class="process-tip text-primary mt-2 hidden" id="tab2-processTip">正在处理文件... 已读取：0%</div>
+            </div>
+            
+            <div class="result-area rounded-xl p-5 card-shadow hidden" id="tab2-resultArea">
+                <div class="result-header flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-100">分类结果</h3>
+                    <button class="export-btn bg-secondary text-white px-4 py-2 rounded-lg cursor-pointer" id="tab2-batchExportBtn">批量导出（所有分类）</button>
+                </div>
+                <div class="export-notice text-gray-400 text-sm mb-4">导出说明：可点击分类卡片中的「导出本类」单独导出，或批量导出所有非空分类</div>
+                
+                <div class="categories grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- 首字母大写 · outlook.com -->
+                    <div class="category-card border border-gray-600 rounded-lg p-4 bg-gray-800">
+                        <div class="category-title flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                            <span class="title-text font-medium">首字母大写 · outlook.com</span>
+                            <div>
+                                <span class="count-tag bg-blue-500/20 text-primary px-2 py-1 rounded-full text-xs mr-2" id="tab2-upperOutlookCount">0条</span>
+                                <button class="category-export-btn bg-primary text-white px-2 py-1 rounded text-xs" data-category="upperOutlook">导出本类</button>
                             </div>
                         </div>
-                        <button 
-                            id="exportDedupBtn" 
-                            class="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
-                            disabled>
-                            <i class="fa fa-download mr-2"></i>导出去重结果（保留范围）
-                        </button>
+                        <div class="data-list max-h-60 overflow-y-auto text-sm text-gray-300" id="tab2-upperOutlookList"></div>
+                    </div>
+                    
+                    <!-- 首字母大写 · hotmail.com -->
+                    <div class="category-card border border-gray-600 rounded-lg p-4 bg-gray-800">
+                        <div class="category-title flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                            <span class="title-text font-medium">首字母大写 · hotmail.com</span>
+                            <div>
+                                <span class="count-tag bg-blue-500/20 text-primary px-2 py-1 rounded-full text-xs mr-2" id="tab2-upperHotmailCount">0条</span>
+                                <button class="category-export-btn bg-primary text-white px-2 py-1 rounded text-xs" data-category="upperHotmail">导出本类</button>
+                            </div>
+                        </div>
+                        <div class="data-list max-h-60 overflow-y-auto text-sm text-gray-300" id="tab2-upperHotmailList"></div>
+                    </div>
+                    
+                    <!-- 首字母小写 · outlook.com -->
+                    <div class="category-card border border-gray-600 rounded-lg p-4 bg-gray-800">
+                        <div class="category-title flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                            <span class="title-text font-medium">首字母小写 · outlook.com</span>
+                            <div>
+                                <span class="count-tag bg-blue-500/20 text-primary px-2 py-1 rounded-full text-xs mr-2" id="tab2-lowerOutlookCount">0条</span>
+                                <button class="category-export-btn bg-primary text-white px-2 py-1 rounded text-xs" data-category="lowerOutlook">导出本类</button>
+                            </div>
+                        </div>
+                        <div class="data-list max-h-60 overflow-y-auto text-sm text-gray-300" id="tab2-lowerOutlookList"></div>
+                    </div>
+                    
+                    <!-- 首字母小写 · hotmail.com -->
+                    <div class="category-card border border-gray-600 rounded-lg p-4 bg-gray-800">
+                        <div class="category-title flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                            <span class="title-text font-medium">首字母小写 · hotmail.com</span>
+                            <div>
+                                <span class="count-tag bg-blue-500/20 text-primary px-2 py-1 rounded-full text-xs mr-2" id="tab2-lowerHotmailCount">0条</span>
+                                <button class="category-export-btn bg-primary text-white px-2 py-1 rounded text-xs" data-category="lowerHotmail">导出本类</button>
+                            </div>
+                        </div>
+                        <div class="data-list max-h-60 overflow-y-auto text-sm text-gray-300" id="tab2-lowerHotmailList"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="empty-state text-center py-10 text-gray-500" id="tab2-emptyState">
+                <div class="empty-icon text-5xl mb-3 opacity-50">📂</div>
+                <p>请上传包含邮箱数据的TXT文件开始分类</p>
+            </div>
+            
+            <div class="export-toast fixed bottom-5 right-5 px-4 py-2 rounded-lg bg-green-500 text-white text-sm opacity-0 transition-opacity duration-300 pointer-events-none" id="tab2-exportToast"></div>
+        </div>
+        
+        <!-- 标签3：UUID与邮箱分类工具 -->
+        <div class="tab-content hidden" id="tab3">
+            <div class="container rounded-xl p-6 card-shadow">
+                <h2 class="text-xl font-bold text-gray-100 mb-3">高效邮箱与UUID分类工具</h2>
+                <p class="text-gray-400 mb-6">优化大数据处理：支持批量导入、分批处理、虚拟滚动，避免卡顿</p>
+                
+                <div class="input-area mb-6">
+                    <label for="tab3-fileInput" class="block font-bold text-gray-300 mb-2">选择TXT文件（支持大文件，每行一条数据）</label>
+                    <input type="file" id="tab3-fileInput" class="file-input mb-4" accept=".txt">
+                    
+                    <label class="block font-bold text-gray-300 mb-2">或直接输入内容：</label>
+                    <textarea id="tab3-textInput" rows="6" class="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-sm resize-none bg-gray-800 placeholder-gray-500" placeholder="示例：
+LamissDembe2236@hotmail.com----beaUTy8hh9R----9e5f94bc-e8a4-4e73-b8be-63364c29d753----其他内容
+helianzoutong792034@hotmail.com----egbkq34341----dbc8e03a-b00c-46bd-ae65-b683e7707cb0----其他内容"></textarea>
+                    
+                    <div class="btn-group flex flex-wrap gap-3 mt-4">
+                        <button onclick="tab3_processData()" class="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors">开始分类</button>
+                        <button onclick="tab3_clearAll()" class="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors">清空内容</button>
+                        <button onclick="tab3_exportAll()" class="px-4 py-2 bg-secondary text-white rounded-lg cursor-pointer hover:bg-secondary/90 transition-colors">导出全部结果</button>
+                    </div>
+                    
+                    <div class="progress-area mt-4 hidden" id="tab3-progressArea">
+                        <div class="progress-bar h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="progress-fill h-full bg-primary w-0 transition-all" id="tab3-progressFill"></div>
+                        </div>
+                        <div class="progress-text text-sm text-gray-400 mt-2" id="tab3-progressText">准备处理...</div>
+                    </div>
+                </div>
+                
+                <div class="result-area grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                    <!-- UUID1分类 -->
+                    <div class="result-box id1 bg-blue-900/20 rounded-lg p-4 border border-blue-800/30">
+                        <h3 class="result-title flex justify-between items-center font-semibold mb-3 pb-2 border-b border-gray-700">
+                            包含 UUID1：9e5f94bc-e8a4-4e73-b8be-63364c29d753
+                            <button onclick="tab3_exportResult('uuid1')" class="px-3 py-1 bg-secondary text-white text-sm rounded-lg cursor-pointer hover:bg-secondary/90 transition-colors">导出</button>
+                        </h3>
+                        <div class="virtual-list border border-gray-700 rounded-lg max-h-60 overflow-y-auto relative bg-gray-800" id="tab3-list1" onscroll="tab3_handleScroll('list1')">
+                            <div class="virtual-list-content absolute w-full" id="tab3-content1"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- UUID2分类 -->
+                    <div class="result-box id2 bg-green-900/20 rounded-lg p-4 border border-green-800/30">
+                        <h3 class="result-title flex justify-between items-center font-semibold mb-3 pb-2 border-b border-gray-700">
+                            包含 UUID2：dbc8e03a-b00c-46bd-ae65-b683e7707cb0
+                            <button onclick="tab3_exportResult('uuid2')" class="px-3 py-1 bg-secondary text-white text-sm rounded-lg cursor-pointer hover:bg-secondary/90 transition-colors">导出</button>
+                        </h3>
+                        <div class="virtual-list border border-gray-700 rounded-lg max-h-60 overflow-y-auto relative bg-gray-800" id="tab3-list2" onscroll="tab3_handleScroll('list2')">
+                            <div class="virtual-list-content absolute w-full" id="tab3-content2"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他分类 -->
+                    <div class="result-box other bg-yellow-900/20 rounded-lg p-4 border border-yellow-800/30">
+                        <h3 class="result-title flex justify-between items-center font-semibold mb-3 pb-2 border-b border-gray-700">
+                            其他UUID或无效数据
+                            <button onclick="tab3_exportResult('other')" class="px-3 py-1 bg-secondary text-white text-sm rounded-lg cursor-pointer hover:bg-secondary/90 transition-colors">导出</button>
+                        </h3>
+                        <div class="virtual-list border border-gray-700 rounded-lg max-h-60 overflow-y-auto relative bg-gray-800" id="tab3-list3" onscroll="tab3_handleScroll('list3')">
+                            <div class="virtual-list-content absolute w-full" id="tab3-content3"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="mt-8 grid md:grid-cols-4 gap-6">
-            <div class="bg-gray-800 rounded-lg shadow-md p-6">
-                <div class="flex items-center mb-2">
-                    <div class="w-8 h-8 rounded-full bg-dataset1/20 flex items-center justify-center mr-3">
-                        <i class="fa fa-database text-dataset1"></i>
+        <!-- 标签4：TXT数据分档工具 -->
+        <div class="tab-content hidden" id="tab4">
+            <div class="max-w-4xl mx-auto">
+                <!-- 工具介绍 -->
+                <div class="rounded-xl shadow-soft p-6 mb-8 transform hover:scale-[1.01] transition-all card-shadow">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fa fa-info-circle text-primary mr-2"></i>工具介绍
+                    </h2>
+                    <p class="text-neutral mb-4">本工具可帮助您将TXT文件中的数据按指定数量拆分到多个文档中。支持自定义分隔符、分档数量或每档条数，适用于处理大量数据。</p>
+                    <div class="text-sm text-gray-400 bg-gray-800 p-3 rounded-lg">
+                        <p><i class="fa fa-check-circle text-secondary mr-1"></i> 支持大文件处理</p>
+                        <p><i class="fa fa-check-circle text-secondary mr-1"></i> 自定义分档规则</p>
+                        <p><i class="fa fa-check-circle text-secondary mr-1"></i> 浏览器内处理，保护数据隐私</p>
                     </div>
-                    <h3 class="font-semibold text-white">数据集 A 统计</h3>
                 </div>
-                <div class="mt-4">
-                    <p class="text-sm text-neutral mb-1">总记录数</p>
-                    <p id="dataset1Total" class="text-2xl font-bold text-white">0</p>
-                </div>
-                <div class="mt-3">
-                    <p class="text-sm text-neutral mb-1">唯一记录数</p>
-                    <p id="dataset1Unique" class="text-xl font-semibold text-dataset1">0</p>
-                </div>
-            </div>
-            
-            <div class="bg-gray-800 rounded-lg shadow-md p-6">
-                <div class="flex items-center mb-2">
-                    <div class="w-8 h-8 rounded-full bg-dataset2/20 flex items-center justify-center mr-3">
-                        <i class="fa fa-database text-dataset2"></i>
+                
+                <!-- 上传文件 -->
+                <div class="rounded-xl shadow-soft p-6 mb-8 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-upload text-primary mr-2"></i>上传TXT文件
+                    </h2>
+                    <div id="tab4-dropArea" class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors bg-gray-800">
+                        <i class="fa fa-file-text-o text-4xl text-gray-500 mb-3"></i>
+                        <p class="mb-2">拖放TXT文件到此处，或<span class="text-primary font-medium">点击选择文件</span></p>
+                        <p class="text-sm text-gray-400">支持格式：.txt</p>
+                        <input type="file" id="tab4-fileInput" accept=".txt" class="hidden">
                     </div>
-                    <h3 class="font-semibold text-white">数据集 B 统计</h3>
-                </div>
-                <div class="mt-4">
-                    <p class="text-sm text-neutral mb-1">总记录数</p>
-                    <p id="dataset2Total" class="text-2xl font-bold text-white">0</p>
-                </div>
-                <div class="mt-3">
-                    <p class="text-sm text-neutral mb-1">唯一记录数</p>
-                    <p id="dataset2Unique" class="text-xl font-semibold text-dataset2">0</p>
-                </div>
-            </div>
-            
-            <div class="bg-gray-800 rounded-lg shadow-md p-6">
-                <div class="flex items-center mb-2">
-                    <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                        <i class="fa fa-overlap text-primary"></i>
+                    <div id="tab4-fileInfo" class="mt-4 hidden">
+                        <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700">
+                            <div class="flex items-center">
+                                <i class="fa fa-file-text-o text-primary mr-2"></i>
+                                <span id="tab4-fileName" class="truncate max-w-md"></span>
+                            </div>
+                            <button id="tab4-removeFile" class="text-gray-400 hover:text-red-500 transition-colors">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
                     </div>
-                    <h3 class="font-semibold text-white">重复项统计</h3>
                 </div>
-                <div class="mt-4">
-                    <p class="text-sm text-neutral mb-1">共同记录数</p>
-                    <p id="commonRecords" class="text-2xl font-bold text-primary">0</p>
-                </div>
-                <div class="mt-3">
-                    <p class="text-sm text-neutral mb-1">A中重复比例</p>
-                    <p id="dataset1MatchRate" class="text-xl font-semibold text-primary">0%</p>
-                </div>
-            </div>
-            
-            <div class="bg-gray-800 rounded-lg shadow-md p-6">
-                <div class="flex items-center mb-2">
-                    <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                        <i class="fa fa-percent text-primary"></i>
+                
+                <!-- 分档设置 -->
+                <div class="rounded-xl shadow-soft p-6 mb-8 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-cog text-primary mr-2"></i>分档设置
+                    </h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">数据分隔符</label>
+                        <div class="flex">
+                            <input type="text" id="tab4-delimiter" value="----" class="flex-1 px-3 py-2 border border-gray-600 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary bg-gray-800 text-gray-200">
+                            <span class="bg-gray-700 px-3 py-2 border border-l-0 border-gray-600 rounded-r-lg text-sm text-gray-400">用于分割数据字段的符号</span>
+                        </div>
                     </div>
-                    <h3 class="font-semibold text-white">匹配比例</h3>
+                    
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">分档方式</label>
+                        <div class="flex flex-wrap gap-4">
+                            <div class="flex items-center">
+                                <input type="radio" id="tab4-byBatches" name="tab4-splitMode" value="batches" checked class="w-4 h-4 text-primary focus:ring-primary/50 border-gray-600 bg-gray-700">
+                                <label for="tab4-byBatches" class="ml-2 text-sm text-gray-300">按分档数量</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="tab4-bySize" name="tab4-splitMode" value="size" class="w-4 h-4 text-primary focus:ring-primary/50 border-gray-600 bg-gray-700">
+                                <label for="tab4-bySize" class="ml-2 text-sm text-gray-300">按每档条数</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="tab4-batchesSetting" class="mb-4">
+                        <label for="tab4-totalBatches" class="block text-sm font-medium text-gray-300 mb-1">总文档数量</label>
+                        <div class="flex">
+                            <input type="number" id="tab4-totalBatches" min="1" value="4" class="flex-1 px-3 py-2 border border-gray-600 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary bg-gray-800 text-gray-200">
+                            <span class="bg-gray-700 px-3 py-2 border border-l-0 border-gray-600 rounded-r-lg text-sm text-gray-400">分成多少个文档</span>
+                        </div>
+                    </div>
+                    
+                    <div id="tab4-sizeSetting" class="mb-4 hidden">
+                        <label for="tab4-batchSize" class="block text-sm font-medium text-gray-300 mb-1">每文档条数</label>
+                        <div class="flex">
+                            <input type="number" id="tab4-batchSize" min="1" value="250" class="flex-1 px-3 py-2 border border-gray-600 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary bg-gray-800 text-gray-200">
+                            <span class="bg-gray-700 px-3 py-2 border border-l-0 border-gray-600 rounded-r-lg text-sm text-gray-400">每个文档包含多少条数据</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-4">
-                    <p class="text-sm text-neutral mb-1">B中重复比例</p>
-                    <p id="dataset2MatchRate" class="text-xl font-semibold text-primary">0%</p>
+                
+                <!-- 开始分档按钮 -->
+                <div class="flex justify-center mb-8">
+                    <button id="tab4-splitBtn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md hover:shadow-lg">
+                        <i class="fa fa-scissors mr-2"></i>开始分档
+                    </button>
                 </div>
-                <div class="mt-3">
-                    <p class="text-sm text-neutral mb-1">整体匹配度</p>
-                    <p id="overallMatchRate" class="text-xl font-semibold text-primary">0%</p>
+                
+                <!-- 处理进度 -->
+                <div id="tab4-progressArea" class="rounded-xl shadow-soft p-6 mb-8 hidden card-shadow">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-spinner fa-spin text-primary mr-2"></i>处理进度
+                    </h2>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span id="tab4-progressText">准备中...</span>
+                            <span id="tab4-progressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="tab4-progressBar" class="bg-primary h-2.5 rounded-full w-0 transition-all"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 结果区域 -->
+                    <div id="tab4-resultArea" class="hidden">
+                        <div class="p-4 bg-green-900/30 border border-green-700 rounded-lg mb-4">
+                            <h3 class="font-medium text-green-400 flex items-center">
+                                <i class="fa fa-check-circle mr-2"></i>处理完成
+                            </h3>
+                            <p class="text-sm text-green-300 mt-1" id="tab4-resultSummary"></p>
+                        </div>
+                        <div class="flex justify-center">
+                            <button id="tab4-downloadBtn" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors shadow-md hover:shadow-lg">
+                                <i class="fa fa-download mr-2"></i>下载分档文件
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
-
-    <footer class="bg-gray-800 border-t border-gray-700 mt-12 py-6">
-        <div class="container mx-auto px-4 text-center text-sm text-neutral">
-            <p>小黑数据查重去重删除综合工具-技术QQ：113575320：支持自定义字段、保留范围、文件导入和拖入功能 &copy; 2025 - 所有数据仅在浏览器中处理，不会上传到服务器</p>
+        
+        <!-- 标签5：密码转换工具 -->
+        <div class="tab-content hidden" id="tab5">
+            <div class="container rounded-xl p-6 card-shadow max-w-4xl mx-auto">
+                <h1 class="text-xl font-bold text-gray-100 text-center mb-6">密码转换工具</h1>
+                
+                <div class="controls flex flex-wrap gap-3 justify-center mb-6">
+                    <button onclick="tab5_convert('urlEncode')" class="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors">URL编码</button>
+                    <button onclick="tab5_convert('urlDecode')" class="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors">URL解码</button>
+                    <button onclick="tab5_convert('base64Encode')" class="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors">Base64编码</button>
+                    <button onclick="tab5_convert('base64Decode')" class="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors">Base64解码</button>
+                    <button onclick="tab5_clearAll()" class="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors">清空</button>
+                </div>
+                
+                <div class="input-area mb-6">
+                    <label for="tab5-input" class="block font-bold text-gray-300 mb-2">输入字符串：</label>
+                    <textarea id="tab5-input" rows="6" class="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-sm resize-none bg-gray-800 placeholder-gray-500 text-gray-200" placeholder="请输入需要转换的密码或字符串..."></textarea>
+                </div>
+                
+                <div class="output-area">
+                    <label for="tab5-output" class="block font-bold text-gray-300 mb-2">转换结果：</label>
+                    <textarea id="tab5-output" rows="6" class="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none text-sm resize-none bg-gray-800 text-gray-200" readonly placeholder="转换结果将显示在这里..."></textarea>
+                </div>
+                
+                <div class="info text-gray-400 text-sm text-center mt-4">提示：支持处理包含特殊字符的密码（如URL编码中的%2A等），本地运行无数据上传</div>
+            </div>
         </div>
-    </footer>
-
+        
+        <!-- 标签6：数据查重去重工具（新增） -->
+        <div class="tab-content hidden" id="tab6">
+            <div class="max-w-7xl mx-auto">
+                <!-- 使用说明 -->
+                <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8 card-shadow">
+                    <h2 class="text-lg font-semibold mb-3 text-white">使用说明</h2>
+                    <p class="text-gray-300 mb-4">
+                        输入或导入两组数据后，可以导出每个数据集中的唯一行，导出内容将保留原始的整行格式。
+                        支持自定义字段数量（字段之间使用"----"分隔）和保留范围（如输入 <code class="bg-gray-700 px-1 py-0.5 rounded">1-4</code> 保留前4个字段）。
+                    </p>
+                    <div class="bg-gray-700 p-4 rounded-md text-sm text-gray-300">
+                        <p class="mb-2"><strong>示例格式：</strong></p>
+                        <p>字段1----字段2----字段3----字段4----字段5----字段6----字段7</p>
+                        <p>user@example.com----abc123----12345----admin----2023-01-01----data----info</p>
+                        <p class="mt-2"><strong>保留范围示例：</strong>输入 <code class="bg-gray-600 px-1 py-0.5 rounded">2-5</code>，结果为：字段2----字段3----字段4----字段5</p>
+                    </div>
+                </div>
+                
+                <!-- 字段管理（保留范围设置） -->
+                <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4 text-white flex items-center">
+                        <i class="fa fa-cog text-primary mr-2"></i>字段与保留范围管理
+                    </h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- 字段数量设置 -->
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center">
+                                <label for="tab6-fieldCount" class="text-sm text-gray-300 mr-2">当前字段数：</label>
+                                <input type="number" id="tab6-fieldCount" min="1" max="20" value="4" 
+                                       class="w-16 p-2 bg-gray-700 border border-gray-600 rounded text-gray-200">
+                            </div>
+                            <button id="tab6-updateFieldsBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition">
+                                <i class="fa fa-refresh mr-1"></i>更新字段
+                            </button>
+                            <div class="text-sm text-gray-400 ml-auto">
+                                提示：字段数最多支持20个
+                            </div>
+                        </div>
+                        <!-- 保留范围设置 -->
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center">
+                                <label for="tab6-keepRange" class="text-sm text-gray-300 mr-2">保留字段范围：</label>
+                                <input type="text" id="tab6-keepRange" placeholder="1-4（默认保留所有）" value="1-4"
+                                       class="w-24 p-2 bg-gray-700 border border-gray-600 rounded text-gray-200">
+                            </div>
+                            <button id="tab6-validateRangeBtn" class="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-md transition">
+                                <i class="fa fa-check mr-1"></i>验证范围
+                            </button>
+                            <div id="tab6-rangeError" class="text-sm text-danger hidden ml-2">
+                                格式错误（示例：1-4）
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 双数据集对比区域 -->
+                <div class="grid md:grid-cols-3 gap-8 mb-8">
+                    <!-- 数据集A -->
+                    <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden card-shadow">
+                        <div class="bg-dataset1/20 gradient-border from-dataset1 to-dataset1/70 px-6 py-3">
+                            <h2 class="font-semibold text-dataset1 flex items-center">
+                                <i class="fa fa-database mr-2"></i>数据集 A
+                            </h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between mb-4">
+                                <div>
+                                    <label for="tab6-dataset1File" class="cursor-pointer text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition inline-flex items-center">
+                                        <i class="fa fa-upload mr-1"></i>导入文件
+                                    </label>
+                                    <input type="file" id="tab6-dataset1File" accept=".txt" class="hidden">
+                                </div>
+                                <button id="tab6-clearDataset1" class="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition">
+                                    <i class="fa fa-trash-o mr-1"></i>清空
+                                </button>
+                            </div>
+                            <textarea 
+                                id="tab6-dataset1Input" 
+                                class="w-full h-64 p-3 border border-gray-700 bg-gray-900 rounded-md focus:ring-2 focus:ring-dataset1/50 focus:border-dataset1 outline-none resize-none scrollbar-thin text-gray-200"
+                                placeholder="请输入第一组数据，每行一条记录..."
+                                data-placeholder="拖入文本文件到此处"></textarea>
+                            <div class="mt-4 text-sm text-neutral">
+                                <span id="tab6-dataset1Count">0 条记录</span>
+                                <span id="tab6-dataset1RangeStatus" class="ml-3 text-secondary hidden">
+                                    <i class="fa fa-check"></i> 范围有效（1-4）
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 数据集B -->
+                    <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden card-shadow">
+                        <div class="bg-dataset2/20 gradient-border from-dataset2 to-dataset2/70 px-6 py-3">
+                            <h2 class="font-semibold text-dataset2 flex items-center">
+                                <i class="fa fa-database mr-2"></i>数据集 B
+                            </h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between mb-4">
+                                <div>
+                                    <label for="tab6-dataset2File" class="cursor-pointer text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition inline-flex items-center">
+                                        <i class="fa fa-upload mr-1"></i>导入文件
+                                    </label>
+                                    <input type="file" id="tab6-dataset2File" accept=".txt" class="hidden">
+                                </div>
+                                <button id="tab6-clearDataset2" class="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition">
+                                    <i class="fa fa-trash-o mr-1"></i>清空
+                                </button>
+                            </div>
+                            <textarea 
+                                id="tab6-dataset2Input" 
+                                class="w-full h-64 p-3 border border-gray-700 bg-gray-900 rounded-md focus:ring-2 focus:ring-dataset2/50 focus:border-dataset2 outline-none resize-none scrollbar-thin text-gray-200"
+                                placeholder="请输入第二组数据，每行一条记录..."
+                                data-placeholder="拖入文本文件到此处"></textarea>
+                            <div class="mt-4 text-sm text-neutral">
+                                <span id="tab6-dataset2Count">0 条记录</span>
+                                <span id="tab6-dataset2RangeStatus" class="ml-3 text-secondary hidden">
+                                    <i class="fa fa-check"></i> 范围有效（1-4）
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 查重设置与结果 -->
+                    <div class="flex flex-col gap-6">
+                        <!-- 查重设置 -->
+                        <div class="bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                            <h2 class="text-lg font-semibold mb-4 text-white">查重设置</h2>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">选择查重字段：</label>
+                                <div id="tab6-fieldOptions" class="flex flex-wrap gap-2">
+                                    <!-- 字段选项将动态生成 -->
+                                </div>
+                            </div>
+                            <button 
+                                id="tab6-compareBtn" 
+                                class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-md transition flex items-center justify-center">
+                                <i class="fa fa-exchange mr-2"></i>对比查重
+                            </button>
+                            <div class="mt-3 grid grid-cols-2 gap-3">
+                                <button 
+                                    id="tab6-sampleBtn" 
+                                    class="bg-gray-700 hover:bg-gray-600 text-neutral font-medium py-2 px-4 rounded-md transition flex items-center justify-center">
+                                    <i class="fa fa-file-text-o mr-2"></i>示例数据
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 导出设置 -->
+                        <div class="bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                            <h2 class="text-lg font-semibold mb-4 text-white">导出设置</h2>
+                            <div class="grid grid-cols-1 gap-3">
+                                <button 
+                                    id="tab6-exportUniqueABtn" 
+                                    class="w-full bg-dataset1 hover:bg-dataset1/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
+                                    disabled>
+                                    <i class="fa fa-download mr-2"></i>导出A唯一行（保留范围）
+                                </button>
+                                <button 
+                                    id="tab6-exportUniqueBBtn" 
+                                    class="w-full bg-dataset2 hover:bg-dataset2/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
+                                    disabled>
+                                    <i class="fa fa-download mr-2"></i>导出B唯一行（保留范围）
+                                </button>
+                                <button 
+                                    id="tab6-exportDuplicatesBtn" 
+                                    class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
+                                    disabled>
+                                    <i class="fa fa-download mr-2"></i>导出重复行（保留范围）
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 查重结果 -->
+                        <div class="bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-lg font-semibold text-white">查重结果</h2>
+                                <span id="tab6-matchCount" class="text-sm px-2 py-1 bg-primary/20 text-primary rounded-full">
+                                    等待对比...
+                                </span>
+                            </div>
+                            <div id="tab6-emptyResultState" class="py-12 text-center">
+                                <i class="fa fa-balance-scale text-4xl text-gray-600 mb-3"></i>
+                                <p class="text-gray-500">对比结果将显示在这里</p>
+                            </div>
+                            <div id="tab6-loadingResultState" class="py-12 text-center hidden">
+                                <i class="fa fa-spinner fa-spin text-4xl text-primary mb-3"></i>
+                                <p class="text-gray-500">正在对比数据...</p>
+                            </div>
+                            <div id="tab6-resultsContainer" class="max-h-64 overflow-y-auto scrollbar-thin hidden">
+                                <div id="tab6-noMatches" class="py-12 text-center hidden">
+                                    <i class="fa fa-check-circle text-4xl text-secondary mb-3"></i>
+                                    <p class="text-gray-500">未发现重复项</p>
+                                </div>
+                                <div id="tab6-matchesList" class="space-y-4">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 单数据去重功能 -->
+                <div class="mt-8 bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                    <h2 class="text-xl font-semibold mb-6 text-white flex items-center">
+                        <i class="fa fa-filter text-primary mr-2"></i>单数据去重功能（支持保留范围）
+                    </h2>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2">
+                            <div class="flex justify-between mb-4">
+                                <div>
+                                    <label for="tab6-dedupFile" class="cursor-pointer text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition inline-flex items-center">
+                                        <i class="fa fa-upload mr-1"></i>导入文件
+                                    </label>
+                                    <input type="file" id="tab6-dedupFile" accept=".txt" class="hidden">
+                                </div>
+                                <button id="tab6-clearDedupInput" class="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-neutral transition">
+                                    <i class="fa fa-trash-o mr-1"></i>清空
+                                </button>
+                            </div>
+                            <textarea 
+                                id="tab6-dedupInput" 
+                                class="w-full h-64 p-3 border border-gray-700 bg-gray-900 rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none resize-none scrollbar-thin text-gray-200"
+                                placeholder="请输入需要去重的数据，每行一条记录..."
+                                data-placeholder="拖入文本文件到此处"></textarea>
+                            <div class="mt-4 text-sm text-neutral">
+                                <span id="tab6-dedupCount">0 条记录</span>
+                                <span id="tab6-dedupRangeStatus" class="ml-3 text-secondary hidden">
+                                    <i class="fa fa-check"></i> 范围有效（1-4）
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium mb-4 text-white">去重设置</h3>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">去重依据：</label>
+                                    <div id="tab6-dedupFieldOptions" class="flex flex-wrap gap-2">
+                                        <!-- 去重字段选项将动态生成 -->
+                                    </div>
+                                </div>
+                                <button 
+                                    id="tab6-dedupBtn" 
+                                    class="w-full bg-secondary hover:bg-secondary/90 text-white font-medium py-3 px-4 rounded-md transition flex items-center justify-center">
+                                    <i class="fa fa-filter mr-2"></i>执行去重（保留范围）
+                                </button>
+                            </div>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium mb-3 text-white">去重结果</h3>
+                                <div class="bg-gray-700 rounded-md p-3">
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-sm text-gray-300">原始记录数:</span>
+                                        <span id="tab6-originalCount" class="text-sm font-medium text-white">0</span>
+                                    </div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-sm text-gray-300">去重后记录数:</span>
+                                        <span id="tab6-uniqueCount" class="text-sm font-medium text-white">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-300">重复记录数:</span>
+                                        <span id="tab6-duplicateCount" class="text-sm font-medium text-white">0</span>
+                                    </div>
+                                </div>
+                                <button 
+                                    id="tab6-exportDedupBtn" 
+                                    class="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition flex items-center justify-center opacity-50 cursor-not-allowed"
+                                    disabled>
+                                    <i class="fa fa-download mr-2"></i>导出去重结果（保留范围）
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="mt-8 grid md:grid-cols-4 gap-6">
+                    <div class="bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded-full bg-dataset1/20 flex items-center justify-center mr-3">
+                                <i class="fa fa-database text-dataset1"></i>
+                            </div>
+                            <h3 class="font-semibold text-white">数据集 A 统计</h3>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm text-neutral mb-1">总记录数</p>
+                            <p id="tab6-dataset1Total" class="text-2xl font-bold text-white">0</p>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-sm text-neutral mb-1">唯一记录数</p>
+                            <p id="tab6-dataset1Unique" class="text-xl font-semibold text-dataset1">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded-full bg-dataset2/20 flex items-center justify-center mr-3">
+                                <i class="fa fa-database text-dataset2"></i>
+                            </div>
+                            <h3 class="font-semibold text-white">数据集 B 统计</h3>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm text-neutral mb-1">总记录数</p>
+                            <p id="tab6-dataset2Total" class="text-2xl font-bold text-white">0</p>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-sm text-neutral mb-1">唯一记录数</p>
+                            <p id="tab6-dataset2Unique" class="text-xl font-semibold text-dataset2">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                                <i class="fa fa-overlap text-primary"></i>
+                            </div>
+                            <h3 class="font-semibold text-white">重复项统计</h3>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm text-neutral mb-1">共同记录数</p>
+                            <p id="tab6-commonRecords" class="text-2xl font-bold text-primary">0</p>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-sm text-neutral mb-1">A中重复比例</p>
+                            <p id="tab6-dataset1MatchRate" class="text-xl font-semibold text-primary">0%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg shadow-md p-6 card-shadow">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                                <i class="fa fa-percent text-primary"></i>
+                            </div>
+                            <h3 class="font-semibold text-white">匹配比例</h3>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm text-neutral mb-1">B中重复比例</p>
+                            <p id="tab6-dataset2MatchRate" class="text-xl font-semibold text-primary">0%</p>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-sm text-neutral mb-1">整体匹配度</p>
+                            <p id="tab6-overallMatchRate" class="text-xl font-semibold text-primary">0%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 全局通知 -->
+        <div id="global-notification" class="fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center hidden">
+            <i id="global-notificationIcon" class="mr-2"></i>
+            <span id="global-notificationText"></span>
+        </div>
+    </div>
+    
     <script>
-        let currentMatches = [];
-        let uniqueRowsA = [];
-        let uniqueRowsB = [];
-        let duplicateRows = [];
-        let currentFieldType = 'entire';
-        let dedupResult = [];
-        let currentFieldCount = 4; // 默认4个字段
-        let keepRangeStart = 1;    // 保留范围起始字段（默认1）
-        let keepRangeEnd = 4;      // 保留范围结束字段（默认4）
-        let isRangeValid = true;   // 保留范围是否有效
+        // 标签切换功能
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 切换标签样式
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('tab-active');
+                    b.classList.add('tab-inactive');
+                });
+                this.classList.remove('tab-inactive');
+                this.classList.add('tab-active');
+                
+                // 切换内容区域
+                const tabId = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(tabId).classList.remove('hidden');
+            });
+        });
         
-        const dataset1Input = document.getElementById('dataset1Input');
-        const dataset2Input = document.getElementById('dataset2Input');
-        const compareBtn = document.getElementById('compareBtn');
-        const clearDataset1 = document.getElementById('clearDataset1');
-        const clearDataset2 = document.getElementById('clearDataset2');
-        const sampleBtn = document.getElementById('sampleBtn');
-        const exportUniqueABtn = document.getElementById('exportUniqueABtn');
-        const exportUniqueBBtn = document.getElementById('exportUniqueBBtn');
-        const exportDuplicatesBtn = document.getElementById('exportDuplicatesBtn');
-        const dataset1Count = document.getElementById('dataset1Count');
-        const dataset2Count = document.getElementById('dataset2Count');
-        const emptyResultState = document.getElementById('emptyResultState');
-        const loadingResultState = document.getElementById('loadingResultState');
-        const resultsContainer = document.getElementById('resultsContainer');
-        const matchesList = document.getElementById('matchesList');
-        const noMatches = document.getElementById('noMatches');
-        const matchCount = document.getElementById('matchCount');
+        // 全局通知功能
+        function showGlobalNotification(message, type = 'info') {
+            const notification = document.getElementById('global-notification');
+            const icon = document.getElementById('global-notificationIcon');
+            const text = document.getElementById('global-notificationText');
+            
+            text.textContent = message;
+            notification.classList.remove('hidden');
+            
+            switch(type) {
+                case 'success':
+                    notification.className = 'fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 flex items-center bg-green-900/80 text-green-300 border border-green-700';
+                    icon.className = 'fa fa-check-circle mr-2';
+                    break;
+                case 'warning':
+                    notification.className = 'fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 flex items-center bg-yellow-900/80 text-yellow-300 border border-yellow-700';
+                    icon.className = 'fa fa-exclamation-triangle mr-2';
+                    break;
+                case 'error':
+                    notification.className = 'fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 flex items-center bg-red-900/80 text-red-300 border border-red-700';
+                    icon.className = 'fa fa-times-circle mr-2';
+                    break;
+                default:
+                    notification.className = 'fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 flex items-center bg-blue-900/80 text-blue-300 border border-blue-700';
+                    icon.className = 'fa fa-info-circle mr-2';
+            }
+            
+            // 3秒后自动关闭
+            setTimeout(() => {
+                notification.classList.add('opacity-0', 'translate-y-20');
+                setTimeout(() => {
+                    notification.classList.add('hidden');
+                }, 300);
+            }, 3000);
+        }
         
-        const dataset1Total = document.getElementById('dataset1Total');
-        const dataset1Unique = document.getElementById('dataset1Unique');
-        const dataset2Total = document.getElementById('dataset2Total');
-        const dataset2Unique = document.getElementById('dataset2Unique');
-        const commonRecords = document.getElementById('commonRecords');
-        const dataset1MatchRate = document.getElementById('dataset1MatchRate');
-        const dataset2MatchRate = document.getElementById('dataset2MatchRate');
-        const overallMatchRate = document.getElementById('overallMatchRate');
+        // ==================== 标签1：邮箱数据排序工具 ====================
+        const tab1_originalData = document.getElementById('tab1-originalData');
+        const tab1_shuffledData = document.getElementById('tab1-shuffledData');
+        const tab1_resultContainer = document.getElementById('tab1-resultContainer');
+        const tab1_sortButton = document.getElementById('tab1-sortButton');
+        const tab1_clearOriginal = document.getElementById('tab1-clearOriginal');
+        const tab1_clearShuffled = document.getElementById('tab1-clearShuffled');
+        const tab1_originalCount = document.getElementById('tab1-originalCount');
+        const tab1_shuffledCount = document.getElementById('tab1-shuffledCount');
+        const tab1_resultCount = document.getElementById('tab1-resultCount');
+        const tab1_matchInfo = document.getElementById('tab1-matchInfo');
+        const tab1_importOriginal = document.getElementById('tab1-importOriginal');
+        const tab1_importShuffled = document.getElementById('tab1-importShuffled');
+        const tab1_exportOriginal = document.getElementById('tab1-exportOriginal');
+        const tab1_exportShuffled = document.getElementById('tab1-exportShuffled');
+        const tab1_exportResult = document.getElementById('tab1-exportResult');
+        const tab1_emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
         
-        const dedupInput = document.getElementById('dedupInput');
-        const dedupCount = document.getElementById('dedupCount');
-        const dedupBtn = document.getElementById('dedupBtn');
-        const clearDedupInput = document.getElementById('clearDedupInput');
-        const exportDedupBtn = document.getElementById('exportDedupBtn');
-        const originalCount = document.getElementById('originalCount');
-        const uniqueCount = document.getElementById('uniqueCount');
-        const duplicateCount = document.getElementById('duplicateCount');
+        function initTab1() {
+            tab1_originalData.addEventListener('input', tab1_updateOriginalCount);
+            tab1_shuffledData.addEventListener('input', tab1_updateShuffledCount);
+            
+            tab1_clearOriginal.addEventListener('click', () => {
+                tab1_originalData.value = '';
+                tab1_updateOriginalCount();
+            });
+            
+            tab1_clearShuffled.addEventListener('click', () => {
+                tab1_shuffledData.value = '';
+                tab1_updateShuffledCount();
+            });
+            
+            tab1_sortButton.addEventListener('click', tab1_sortDataByEmail);
+            
+            tab1_importOriginal.addEventListener('change', (e) => tab1_importTxtFile(e, tab1_originalData));
+            tab1_importShuffled.addEventListener('change', (e) => tab1_importTxtFile(e, tab1_shuffledData));
+            
+            tab1_exportOriginal.addEventListener('click', () => tab1_exportTxtFile(tab1_originalData.value, '原数据'));
+            tab1_exportShuffled.addEventListener('click', () => tab1_exportTxtFile(tab1_shuffledData.value, '打乱数据'));
+            tab1_exportResult.addEventListener('click', tab1_exportResultAsTxt);
+            
+            tab1_updateOriginalCount();
+            tab1_updateShuffledCount();
+        }
         
-        const fieldCountInput = document.getElementById('fieldCount');
-        const updateFieldsBtn = document.getElementById('updateFieldsBtn');
-        const fieldOptions = document.getElementById('fieldOptions');
-        const dedupFieldOptions = document.getElementById('dedupFieldOptions');
-        const keepRangeInput = document.getElementById('keepRange');
-        const validateRangeBtn = document.getElementById('validateRangeBtn');
-        const rangeError = document.getElementById('rangeError');
-        const dataset1RangeStatus = document.getElementById('dataset1RangeStatus');
-        const dataset2RangeStatus = document.getElementById('dataset2RangeStatus');
-        const dedupRangeStatus = document.getElementById('dedupRangeStatus');
+        // 更新原数据计数
+        function tab1_updateOriginalCount() {
+            const lines = tab1_originalData.value.trim().split('\n').filter(line => line.trim() !== '');
+            tab1_originalCount.textContent = lines.length;
+        }
         
-        const sampleDataset1 = `ChristineButler3046@hotmail.com----y86JPQdn----9e5f94bc-e8a4-4e73-b8be-63364c29d753----M.C501_BAY----2023-01-15----data1----info1
+        // 更新打乱数据计数
+        function tab1_updateShuffledCount() {
+            const lines = tab1_shuffledData.value.trim().split('\n').filter(line => line.trim() !== '');
+            tab1_shuffledCount.textContent = lines.length;
+        }
+        
+        // 提取第一个邮箱
+        function tab1_extractFirstEmail(text) {
+            const matches = text.match(tab1_emailRegex);
+            return matches ? matches[0].toLowerCase() : null;
+        }
+        
+// 按邮箱排序数据
+function tab1_sortDataByEmail() {
+    const originalLines = tab1_originalData.value.trim().split('\n').filter(line => line.trim() !== '');
+    const shuffledLines = tab1_shuffledData.value.trim().split('\n').filter(line => line.trim() !== '');
+    
+    if (originalLines.length === 0) {
+        showGlobalNotification('请输入原数据', 'warning');
+        return;
+    }
+    
+    if (shuffledLines.length === 0) {
+        showGlobalNotification('请输入打乱数据', 'warning');
+        return;
+    }
+    
+    // 创建原数据的邮箱映射
+    const originalEmailMap = new Map();
+    originalLines.forEach((line, index) => {
+        const email = tab1_extractFirstEmail(line);
+        if (email) {
+            originalEmailMap.set(email, { line, index });
+        }
+    });
+    
+    // 为打乱的数据按原数据顺序排序
+    const sortedShuffledLines = [...shuffledLines].sort((a, b) => {
+        const emailA = tab1_extractFirstEmail(a);
+        const emailB = tab1_extractFirstEmail(b);
+        
+        const posA = emailA && originalEmailMap.has(emailA) ? originalEmailMap.get(emailA).index : Infinity;
+        const posB = emailB && originalEmailMap.has(emailB) ? originalEmailMap.get(emailB).index : Infinity;
+        
+        return posA - posB;
+    });
+    
+    // 统计匹配和未匹配的数量
+    let matchedCount = 0;
+    const unmatchedLines = [];
+    
+    sortedShuffledLines.forEach(line => {
+        const email = tab1_extractFirstEmail(line);
+        if (email && originalEmailMap.has(email)) {
+            matchedCount++;
+        } else {
+            unmatchedLines.push(line);
+        }
+    });
+    
+    // 显示排序结果
+    const resultText = sortedShuffledLines.join('\n');
+    tab1_resultContainer.innerHTML = `<pre class="text-sm whitespace-pre-wrap">${escapeHtml(resultText)}</pre>`;
+    tab1_resultCount.textContent = sortedShuffledLines.length;
+    
+    // 更新匹配信息
+    tab1_matchInfo.innerHTML = `
+        <p>原数据总数：${originalLines.length} 条</p>
+        <p>打乱数据总数：${shuffledLines.length} 条</p>
+        <p>匹配成功：${matchedCount} 条</p>
+        <p>未匹配：${unmatchedLines.length} 条</p>
+        ${unmatchedLines.length > 0 ? `<p>未匹配数据：</p><pre class="bg-gray-800 p-2 rounded text-xs mt-1">${escapeHtml(unmatchedLines.join('\n'))}</pre>` : ''}
+    `;
+    
+    showGlobalNotification(`排序完成！匹配成功 ${matchedCount} 条，未匹配 ${unmatchedLines.length} 条`, 'success');
+}
+
+// 导入TXT文件
+function tab1_importTxtFile(event, targetTextarea) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+        showGlobalNotification('请选择TXT格式的文件', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        targetTextarea.value = e.target.result;
+        
+        // 更新计数
+        if (targetTextarea === tab1_originalData) {
+            tab1_updateOriginalCount();
+        } else if (targetTextarea === tab1_shuffledData) {
+            tab1_updateShuffledCount();
+        }
+        
+        showGlobalNotification(`成功导入文件：${file.name}`, 'success');
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+// 导出TXT文件
+function tab1_exportTxtFile(content, fileNamePrefix) {
+    if (!content.trim()) {
+        showGlobalNotification('没有可导出的数据', 'warning');
+        return;
+    }
+    
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const fileName = `${fileNamePrefix}_${new Date().getTime()}.txt`;
+    
+    // 使用FileSaver.js保存文件
+    saveAs(blob, fileName);
+}
+
+// 导出结果为TXT
+function tab1_exportResultAsTxt() {
+    const resultContent = tab1_resultContainer.textContent.trim();
+    if (!resultContent || resultContent === '排序结果将显示在这里') {
+        showGlobalNotification('没有可导出的排序结果', 'warning');
+        return;
+    }
+    
+    tab1_exportTxtFile(resultContent, '排序结果');
+}
+
+// HTML转义函数
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// ==================== 标签2：邮箱数据分类工具 ====================
+// 初始化标签2
+function initTab2() {
+    const fileInput = document.getElementById('tab2-fileInput');
+    const fileInfo = document.getElementById('tab2-fileInfo');
+    const fileNameSpan = document.createElement('span');
+    const resultArea = document.getElementById('tab2-resultArea');
+    const emptyState = document.getElementById('tab2-emptyState');
+    const batchExportBtn = document.getElementById('tab2-batchExportBtn');
+    const processTip = document.getElementById('tab2-processTip');
+    const exportToast = document.getElementById('tab2-exportToast');
+    
+    let fileContent = '';
+    let categories = {
+        upperOutlook: [],
+        upperHotmail: [],
+        lowerOutlook: [],
+        lowerHotmail: []
+    };
+    
+    // 选择文件事件
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // 验证文件类型
+        if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+            showGlobalNotification('请选择TXT格式的文件', 'error');
+            return;
+        }
+        
+        // 显示文件信息
+        fileNameSpan.textContent = file.name;
+        fileInfo.innerHTML = '';
+        fileInfo.appendChild(fileNameSpan);
+        fileInfo.classList.remove('hidden');
+        
+        // 读取文件内容
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fileContent = e.target.result;
+            emptyState.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+            
+            // 处理文件内容
+            processFileContent(fileContent);
+        };
+        reader.readAsText(file, 'UTF-8');
+    });
+    
+    // 批量导出事件
+    batchExportBtn.addEventListener('click', function() {
+        if (Object.values(categories).every(arr => arr.length === 0)) {
+            showGlobalNotification('没有可导出的数据', 'warning');
+            return;
+        }
+        
+        // 创建ZIP文件
+        const zip = new JSZip();
+        
+        // 添加各个分类的数据
+        if (categories.upperOutlook.length > 0) {
+            zip.file('首字母大写·outlook.com.txt', categories.upperOutlook.join('\n'));
+        }
+        if (categories.upperHotmail.length > 0) {
+            zip.file('首字母大写·hotmail.com.txt', categories.upperHotmail.join('\n'));
+        }
+        if (categories.lowerOutlook.length > 0) {
+            zip.file('首字母小写·outlook.com.txt', categories.lowerOutlook.join('\n'));
+        }
+        if (categories.lowerHotmail.length > 0) {
+            zip.file('首字母小写·hotmail.com.txt', categories.lowerHotmail.join('\n'));
+        }
+        
+        // 生成ZIP文件并下载
+        zip.generateAsync({ type: 'blob' }).then(function(content) {
+            saveAs(content, '邮箱分类结果.zip');
+            showExportToast('批量导出成功！');
+        });
+    });
+    
+    // 为每个分类导出按钮添加事件
+    document.querySelectorAll('.category-export-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            const data = categories[category];
+            const fileName = this.closest('.category-card').querySelector('.title-text').textContent + '.txt';
+            
+            if (data.length === 0) {
+                showGlobalNotification('该分类没有可导出的数据', 'warning');
+                return;
+            }
+            
+            const blob = new Blob([data.join('\n')], { type: 'text/plain;charset=utf-8' });
+            saveAs(blob, fileName);
+            showExportToast('导出成功！');
+        });
+    });
+    
+    // 处理文件内容
+    function processFileContent(content) {
+        const lines = content.split('\n');
+        const totalLines = lines.length;
+        let processedLines = 0;
+        
+        // 清空分类
+        categories = {
+            upperOutlook: [],
+            upperHotmail: [],
+            lowerOutlook: [],
+            lowerHotmail: []
+        };
+        
+        // 显示处理提示
+        processTip.classList.remove('hidden');
+        
+        // 逐行处理数据（使用setTimeout避免UI阻塞）
+        function processLine() {
+            if (processedLines < totalLines) {
+                const line = lines[processedLines].trim();
+                if (line) {
+                    const email = extractEmail(line);
+                    if (email) {
+                        const [localPart, domain] = email.split('@');
+                        if (localPart && domain) {
+                            // 检查首字母大小写和域名
+                            if (localPart[0] === localPart[0].toUpperCase()) {
+                                if (domain.toLowerCase() === 'outlook.com') {
+                                    categories.upperOutlook.push(line);
+                                } else if (domain.toLowerCase() === 'hotmail.com') {
+                                    categories.upperHotmail.push(line);
+                                }
+                            } else {
+                                if (domain.toLowerCase() === 'outlook.com') {
+                                    categories.lowerOutlook.push(line);
+                                } else if (domain.toLowerCase() === 'hotmail.com') {
+                                    categories.lowerHotmail.push(line);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                processedLines++;
+                const progress = Math.round((processedLines / totalLines) * 100);
+                processTip.textContent = `正在处理文件... 已读取：${progress}%`;
+                
+                // 继续处理下一行
+                setTimeout(processLine, 0);
+            } else {
+                // 处理完成，更新UI
+                processTip.classList.add('hidden');
+                updateCategoryUI();
+                showGlobalNotification('文件处理完成', 'success');
+            }
+        }
+        
+        // 开始处理第一行
+        processLine();
+    }
+    
+    // 更新分类UI
+    function updateCategoryUI() {
+        // 更新各个分类的计数和列表
+        updateCategory('upperOutlook', '首字母大写 · outlook.com');
+        updateCategory('upperHotmail', '首字母大写 · hotmail.com');
+        updateCategory('lowerOutlook', '首字母小写 · outlook.com');
+        updateCategory('lowerHotmail', '首字母小写 · hotmail.com');
+    }
+    
+    // 更新单个分类
+    function updateCategory(categoryKey, categoryName) {
+        const countElement = document.getElementById(`tab2-${categoryKey}Count`);
+        const listElement = document.getElementById(`tab2-${categoryKey}List`);
+        const data = categories[categoryKey];
+        
+        // 更新计数
+        countElement.textContent = `${data.length}条`;
+        
+        // 更新列表
+        if (data.length > 0) {
+            listElement.innerHTML = data.map(line => `<div class="py-1 border-b border-gray-700 truncate">${escapeHtml(line)}</div>`).join('');
+        } else {
+            listElement.innerHTML = '<div class="text-gray-500 italic">无数据</div>';
+        }
+    }
+    
+    // 提取邮箱地址
+    function extractEmail(line) {
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+        const match = line.match(emailRegex);
+        return match ? match[0] : null;
+    }
+    
+    // 显示导出提示
+    function showExportToast(message) {
+        exportToast.textContent = message;
+        exportToast.classList.add('opacity-100');
+        exportToast.classList.remove('pointer-events-none');
+        
+        setTimeout(() => {
+            exportToast.classList.remove('opacity-100');
+            exportToast.classList.add('pointer-events-none');
+        }, 2000);
+    }
+}
+
+// ==================== 标签3：UUID与邮箱分类工具 ====================
+// 全局变量
+let tab3_data = [];
+let tab3_results = {
+    uuid1: [],
+    uuid2: [],
+    other: []
+};
+let tab3_virtualListState = {
+    list1: { start: 0, end: 20 },
+    list2: { start: 0, end: 20 },
+    list3: { start: 0, end: 20 }
+};
+const UUID1 = '9e5f94bc-e8a4-4e73-b8be-63364c29d753';
+const UUID2 = 'dbc8e03a-b00c-46bd-ae65-b683e7707cb0';
+const ITEMS_PER_PAGE = 20;
+
+// 处理数据
+function tab3_processData() {
+    const fileInput = document.getElementById('tab3-fileInput');
+    const textInput = document.getElementById('tab3-textInput');
+    const progressArea = document.getElementById('tab3-progressArea');
+    const progressFill = document.getElementById('tab3-progressFill');
+    const progressText = document.getElementById('tab3-progressText');
+    
+    // 清空之前的结果
+    tab3_results = {
+        uuid1: [],
+        uuid2: [],
+        other: []
+    };
+    
+    // 显示进度条
+    progressArea.classList.remove('hidden');
+    progressFill.style.width = '0%';
+    progressText.textContent = '准备处理...';
+    
+    // 处理文件或文本输入
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            tab3_data = e.target.result.split('\n').filter(line => line.trim() !== '');
+            processLinesInBatches();
+        };
+        
+        reader.readAsText(file, 'UTF-8');
+    } else if (textInput.value.trim() !== '') {
+        tab3_data = textInput.value.trim().split('\n').filter(line => line.trim() !== '');
+        processLinesInBatches();
+    } else {
+        showGlobalNotification('请选择文件或输入内容', 'warning');
+        progressArea.classList.add('hidden');
+        return;
+    }
+}
+
+// 分批处理行数据
+function processLinesInBatches() {
+    const totalLines = tab3_data.length;
+    let processedLines = 0;
+    const batchSize = 100; // 每批处理100行
+    
+    function processBatch() {
+        const end = Math.min(processedLines + batchSize, totalLines);
+        
+        for (let i = processedLines; i < end; i++) {
+            const line = tab3_data[i].trim();
+            if (line.includes(UUID1)) {
+                tab3_results.uuid1.push(line);
+            } else if (line.includes(UUID2)) {
+                tab3_results.uuid2.push(line);
+            } else {
+                tab3_results.other.push(line);
+            }
+        }
+        
+        processedLines = end;
+        const progress = Math.round((processedLines / totalLines) * 100);
+        
+        // 更新进度条
+        document.getElementById('tab3-progressFill').style.width = `${progress}%`;
+        document.getElementById('tab3-progressText').textContent = `处理中: ${processedLines}/${totalLines} (${progress}%)`;
+        
+        // 如果还有未处理的行，继续处理下一批
+        if (processedLines < totalLines) {
+            setTimeout(processBatch, 0); // 使用setTimeout避免UI阻塞
+        } else {
+            // 处理完成，更新UI
+            updateAllVirtualLists();
+            showGlobalNotification('数据处理完成', 'success');
+        }
+    }
+    
+    // 开始处理第一批
+    processBatch();
+}
+
+// 更新所有虚拟列表
+function updateAllVirtualLists() {
+    updateVirtualList('list1', tab3_results.uuid1);
+    updateVirtualList('list2', tab3_results.uuid2);
+    updateVirtualList('list3', tab3_results.other);
+}
+
+// 更新虚拟列表
+function updateVirtualList(listId, data) {
+    const listElement = document.getElementById(`tab3-${listId}`);
+    const contentElement = document.getElementById(`tab3-content${listId.slice(-1)}`);
+    const state = tab3_virtualListState[listId];
+    
+    // 设置列表高度
+    listElement.style.height = '300px';
+    
+    // 计算总页数
+    const totalItems = data.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    
+    // 确保start和end在有效范围内
+    state.start = Math.max(0, Math.min(state.start, totalItems - 1));
+    state.end = Math.max(state.start + 1, Math.min(state.start + ITEMS_PER_PAGE, totalItems));
+    
+    // 生成可见区域的HTML
+    let html = '';
+    for (let i = state.start; i < state.end; i++) {
+        html += `<div class="py-1 border-b border-gray-700 truncate text-sm">${escapeHtml(data[i])}</div>`;
+    }
+    
+    // 如果没有数据，显示提示信息
+    if (totalItems === 0) {
+        html = '<div class="text-gray-500 italic text-center py-4">无数据</div>';
+    }
+    
+    // 更新内容
+    contentElement.innerHTML = html;
+    
+    // 更新滚动位置
+    contentElement.style.transform = `translateY(${state.start * 30}px)`;
+    
+    // 更新列表标题计数
+    const titleElement = listElement.closest('.result-box').querySelector('.result-title');
+    titleElement.innerHTML = titleElement.innerHTML.replace(/\(\d+\)$/, `(${totalItems})`);
+}
+
+// 处理滚动事件
+function tab3_handleScroll(listId) {
+    const listElement = document.getElementById(`tab3-${listId}`);
+    const contentElement = document.getElementById(`tab3-content${listId.slice(-1)}`);
+    const state = tab3_virtualListState[listId];
+    const data = listId === 'list1' ? tab3_results.uuid1 : 
+                listId === 'list2' ? tab3_results.uuid2 : tab3_results.other;
+    
+    const scrollTop = listElement.scrollTop;
+    const itemHeight = 30; // 每个项目的高度
+    const visibleItems = Math.floor(listElement.clientHeight / itemHeight);
+    
+    // 计算当前可见的起始索引
+    let start = Math.floor(scrollTop / itemHeight);
+    start = Math.max(0, start - 5); // 提前加载5个项目
+    
+    // 计算结束索引
+    let end = start + visibleItems + 10; // 多加载10个项目作为缓冲
+    end = Math.min(end, data.length);
+    
+    // 如果起始或结束索引发生变化，更新列表
+    if (start !== state.start || end !== state.end) {
+        state.start = start;
+        state.end = end;
+        updateVirtualList(listId, data);
+    }
+}
+
+// 清空所有内容
+function tab3_clearAll() {
+    document.getElementById('tab3-fileInput').value = '';
+    document.getElementById('tab3-textInput').value = '';
+    document.getElementById('tab3-progressArea').classList.add('hidden');
+    
+    // 清空结果
+    tab3_results = {
+        uuid1: [],
+        uuid2: [],
+        other: []
+    };
+    
+    // 更新UI
+    updateAllVirtualLists();
+    
+    showGlobalNotification('已清空所有内容', 'info');
+}
+
+// 导出结果
+function tab3_exportResult(type) {
+    let data, fileName;
+    
+    switch(type) {
+        case 'uuid1':
+            data = tab3_results.uuid1;
+            fileName = `包含UUID1_${UUID1}.txt`;
+            break;
+        case 'uuid2':
+            data = tab3_results.uuid2;
+            fileName = `包含UUID2_${UUID2}.txt`;
+            break;
+        case 'other':
+            data = tab3_results.other;
+            fileName = '其他UUID或无效数据.txt';
+            break;
+        default:
+            return;
+    }
+    
+    if (data.length === 0) {
+        showGlobalNotification('没有可导出的数据', 'warning');
+        return;
+    }
+    
+    const blob = new Blob([data.join('\n')], { type: 'text/plain;charset=utf-8' });
+    saveAs(blob, fileName);
+    
+    showGlobalNotification(`导出成功：${fileName}`, 'success');
+}
+
+// 导出所有结果
+function tab3_exportAll() {
+    if (Object.values(tab3_results).every(arr => arr.length === 0)) {
+        showGlobalNotification('没有可导出的数据', 'warning');
+        return;
+    }
+    
+    // 创建ZIP文件
+    const zip = new JSZip();
+    
+    // 添加各个分类的数据
+    if (tab3_results.uuid1.length > 0) {
+        zip.file(`包含UUID1_${UUID1}.txt`, tab3_results.uuid1.join('\n'));
+    }
+    if (tab3_results.uuid2.length > 0) {
+        zip.file(`包含UUID2_${UUID2}.txt`, tab3_results.uuid2.join('\n'));
+    }
+    if (tab3_results.other.length > 0) {
+        zip.file('其他UUID或无效数据.txt', tab3_results.other.join('\n'));
+    }
+    
+    // 生成ZIP文件并下载
+    zip.generateAsync({ type: 'blob' }).then(function(content) {
+        saveAs(content, 'UUID分类结果.zip');
+        showGlobalNotification('批量导出成功！', 'success');
+    });
+}
+
+// ==================== 标签4：TXT数据分档工具 ====================
+function initTab4() {
+    const dropArea = document.getElementById('tab4-dropArea');
+    const fileInput = document.getElementById('tab4-fileInput');
+    const fileInfo = document.getElementById('tab4-fileInfo');
+    const fileName = document.getElementById('tab4-fileName');
+    const removeFile = document.getElementById('tab4-removeFile');
+    const splitBtn = document.getElementById('tab4-splitBtn');
+    const progressArea = document.getElementById('tab4-progressArea');
+    const progressBar = document.getElementById('tab4-progressBar');
+    const progressText = document.getElementById('tab4-progressText');
+    const progressPercent = document.getElementById('tab4-progressPercent');
+    const resultArea = document.getElementById('tab4-resultArea');
+    const resultSummary = document.getElementById('tab4-resultSummary');
+    const downloadBtn = document.getElementById('tab4-downloadBtn');
+    const byBatches = document.getElementById('tab4-byBatches');
+    const bySize = document.getElementById('tab4-bySize');
+    const batchesSetting = document.getElementById('tab4-batchesSetting');
+    const sizeSetting = document.getElementById('tab4-sizeSetting');
+    
+    let fileContent = '';
+    let splitResults = [];
+    
+    // 拖放事件处理
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('border-primary');
+        dropArea.classList.add('bg-gray-700');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('border-primary');
+        dropArea.classList.remove('bg-gray-700');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) {
+            handleFiles(files);
+        }
+    }
+    
+    // 文件选择事件
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) {
+            handleFiles(this.files);
+        }
+    });
+    
+    // 点击选择文件
+    dropArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // 移除文件
+    removeFile.addEventListener('click', function() {
+        resetFileInput();
+    });
+    
+    // 分档方式切换
+    byBatches.addEventListener('change', function() {
+        if (this.checked) {
+            batchesSetting.classList.remove('hidden');
+            sizeSetting.classList.add('hidden');
+        }
+    });
+    
+    bySize.addEventListener('change', function() {
+        if (this.checked) {
+            batchesSetting.classList.add('hidden');
+            sizeSetting.classList.remove('hidden');
+        }
+    });
+    
+    // 开始分档
+    splitBtn.addEventListener('click', function() {
+        if (!fileContent) {
+            showGlobalNotification('请先选择文件', 'warning');
+            return;
+        }
+        
+        // 获取分档设置
+        let totalBatches, batchSize;
+        if (byBatches.checked) {
+            totalBatches = parseInt(document.getElementById('tab4-totalBatches').value);
+            if (isNaN(totalBatches) || totalBatches < 1) {
+                showGlobalNotification('请输入有效的分档数量', 'warning');
+                return;
+            }
+        } else {
+            batchSize = parseInt(document.getElementById('tab4-batchSize').value);
+            if (isNaN(batchSize) || batchSize < 1) {
+                showGlobalNotification('请输入有效的每档条数', 'warning');
+                return;
+            }
+        }
+        
+        // 显示进度条
+        progressArea.classList.remove('hidden');
+        resultArea.classList.add('hidden');
+        progressBar.style.width = '0%';
+        progressText.textContent = '准备分档...';
+        progressPercent.textContent = '0%';
+        
+        // 分割文件内容
+        setTimeout(() => {
+            splitFileContent(fileContent, byBatches.checked ? totalBatches : batchSize);
+        }, 100);
+    });
+    
+    // 下载分档文件
+    downloadBtn.addEventListener('click', function() {
+        if (splitResults.length === 0) {
+            showGlobalNotification('没有可下载的分档结果', 'warning');
+            return;
+        }
+        
+        // 创建ZIP文件
+        const zip = new JSZip();
+        
+        // 添加分档文件
+        splitResults.forEach((batch, index) => {
+            zip.file(`分档_${index + 1}.txt`, batch);
+        });
+        
+        // 生成ZIP文件并下载
+        zip.generateAsync({ type: 'blob' }).then(function(content) {
+            saveAs(content, 'TXT分档结果.zip');
+            showGlobalNotification('分档文件下载成功', 'success');
+        });
+    });
+    
+    // 处理文件
+    function handleFiles(files) {
+        const file = files[0];
+        if (!file.name.endsWith('.txt')) {
+            showGlobalNotification('请选择TXT格式的文件', 'error');
+            return;
+        }
+        
+        // 显示文件信息
+        fileName.textContent = file.name;
+        fileInfo.classList.remove('hidden');
+        
+        // 读取文件内容
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fileContent = e.target.result;
+            showGlobalNotification(`文件加载成功：${file.name}`, 'success');
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
+    
+    // 重置文件输入
+    function resetFileInput() {
+        fileInput.value = '';
+        fileContent = '';
+        fileInfo.classList.add('hidden');
+        splitResults = [];
+    }
+    
+    // 分割文件内容
+    function splitFileContent(content, splitValue) {
+        const delimiter = document.getElementById('tab4-delimiter').value || '----';
+        const isByBatches = byBatches.checked;
+        
+        // 按分隔符分割内容
+        const items = content.split(delimiter).map(item => item.trim()).filter(item => item !== '');
+        const totalItems = items.length;
+        
+        if (totalItems === 0) {
+            showGlobalNotification('文件中没有找到有效数据', 'warning');
+            progressArea.classList.add('hidden');
+            return;
+        }
+        
+        // 计算分档数量
+        let totalBatches;
+        if (isByBatches) {
+            totalBatches = splitValue;
+        } else {
+            batchSize = splitValue;
+            totalBatches = Math.ceil(totalItems / batchSize);
+        }
+        
+        // 计算每档的项目数量
+        const itemsPerBatch = Math.ceil(totalItems / totalBatches);
+        
+        // 分割数据
+        splitResults = [];
+        for (let i = 0; i < totalBatches; i++) {
+            const start = i * itemsPerBatch;
+            const end = Math.min(start + itemsPerBatch, totalItems);
+            const batchItems = items.slice(start, end);
+            splitResults.push(batchItems.join(delimiter));
+            
+            // 更新进度
+            const progress = Math.round(((i + 1) / totalBatches) * 100);
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `分档中: ${i + 1}/${totalBatches}`;
+            progressPercent.textContent = `${progress}%`;
+        }
+        
+        // 更新结果摘要
+        resultSummary.textContent = `共 ${totalItems} 条数据，分为 ${totalBatches} 个文件，平均每档 ${itemsPerBatch} 条数据`;
+        
+        // 显示结果区域
+        resultArea.classList.remove('hidden');
+        
+        showGlobalNotification(`分档完成！共生成 ${totalBatches} 个文件`, 'success');
+    }
+}
+
+// ==================== 标签5：密码转换工具 ====================
+// 转换函数
+function tab5_convert(type) {
+    const input = document.getElementById('tab5-input').value.trim();
+    const output = document.getElementById('tab5-output');
+    
+    if (!input) {
+        showGlobalNotification('请输入需要转换的内容', 'warning');
+        output.value = '';
+        return;
+    }
+    
+    let result = '';
+    
+    try {
+        switch(type) {
+            case 'urlEncode':
+                result = encodeURIComponent(input);
+                break;
+            case 'urlDecode':
+                result = decodeURIComponent(input);
+                break;
+            case 'base64Encode':
+                result = btoa(unescape(encodeURIComponent(input)));
+                break;
+            case 'base64Decode':
+                result = decodeURIComponent(escape(atob(input)));
+                break;
+        }
+        
+        output.value = result;
+        showGlobalNotification(`转换成功：${type}`, 'success');
+    } catch (error) {
+        output.value = '';
+        showGlobalNotification(`转换失败：${error.message}`, 'error');
+    }
+}
+
+// 清空所有内容
+function tab5_clearAll() {
+    document.getElementById('tab5-input').value = '';
+    document.getElementById('tab5-output').value = '';
+    showGlobalNotification('已清空输入和输出', 'info');
+}
+
+// ==================== 标签6：数据查重去重工具 ====================
+function initTab6() {
+    let currentMatches = [];
+    let uniqueRowsA = [];
+    let uniqueRowsB = [];
+    let duplicateRows = [];
+    let currentFieldType = 'entire';
+    let dedupResult = [];
+    let currentFieldCount = 4; // 默认4个字段
+    let keepRangeStart = 1;    // 保留范围起始字段（默认1）
+    let keepRangeEnd = 4;      // 保留范围结束字段（默认4）
+    let isRangeValid = true;   // 保留范围是否有效
+    
+    const dataset1Input = document.getElementById('tab6-dataset1Input');
+    const dataset2Input = document.getElementById('tab6-dataset2Input');
+    const compareBtn = document.getElementById('tab6-compareBtn');
+    const clearDataset1 = document.getElementById('tab6-clearDataset1');
+    const clearDataset2 = document.getElementById('tab6-clearDataset2');
+    const sampleBtn = document.getElementById('tab6-sampleBtn');
+    const exportUniqueABtn = document.getElementById('tab6-exportUniqueABtn');
+    const exportUniqueBBtn = document.getElementById('tab6-exportUniqueBBtn');
+    const exportDuplicatesBtn = document.getElementById('tab6-exportDuplicatesBtn');
+    const dataset1Count = document.getElementById('tab6-dataset1Count');
+    const dataset2Count = document.getElementById('tab6-dataset2Count');
+    const emptyResultState = document.getElementById('tab6-emptyResultState');
+    const loadingResultState = document.getElementById('tab6-loadingResultState');
+    const resultsContainer = document.getElementById('tab6-resultsContainer');
+    const matchesList = document.getElementById('tab6-matchesList');
+    const noMatches = document.getElementById('tab6-noMatches');
+    const matchCount = document.getElementById('tab6-matchCount');
+    
+    const dataset1Total = document.getElementById('tab6-dataset1Total');
+    const dataset1Unique = document.getElementById('tab6-dataset1Unique');
+    const dataset2Total = document.getElementById('tab6-dataset2Total');
+    const dataset2Unique = document.getElementById('tab6-dataset2Unique');
+    const commonRecords = document.getElementById('tab6-commonRecords');
+    const dataset1MatchRate = document.getElementById('tab6-dataset1MatchRate');
+    const dataset2MatchRate = document.getElementById('tab6-dataset2MatchRate');
+    const overallMatchRate = document.getElementById('tab6-overallMatchRate');
+    
+    const dedupInput = document.getElementById('tab6-dedupInput');
+    const dedupCount = document.getElementById('tab6-dedupCount');
+    const dedupBtn = document.getElementById('tab6-dedupBtn');
+    const clearDedupInput = document.getElementById('tab6-clearDedupInput');
+    const exportDedupBtn = document.getElementById('tab6-exportDedupBtn');
+    const originalCount = document.getElementById('tab6-originalCount');
+    const uniqueCount = document.getElementById('tab6-uniqueCount');
+    const duplicateCount = document.getElementById('tab6-duplicateCount');
+    
+    const fieldCountInput = document.getElementById('tab6-fieldCount');
+    const updateFieldsBtn = document.getElementById('tab6-updateFieldsBtn');
+    const fieldOptions = document.getElementById('tab6-fieldOptions');
+    const dedupFieldOptions = document.getElementById('tab6-dedupFieldOptions');
+    const keepRangeInput = document.getElementById('tab6-keepRange');
+    const validateRangeBtn = document.getElementById('tab6-validateRangeBtn');
+    const rangeError = document.getElementById('tab6-rangeError');
+    const dataset1RangeStatus = document.getElementById('tab6-dataset1RangeStatus');
+    const dataset2RangeStatus = document.getElementById('tab6-dataset2RangeStatus');
+    const dedupRangeStatus = document.getElementById('tab6-dedupRangeStatus');
+    
+    const sampleDataset1 = `ChristineButler3046@hotmail.com----y86JPQdn----9e5f94bc-e8a4-4e73-b8be-63364c29d753----M.C501_BAY----2023-01-15----data1----info1
 JohnDoe123@example.com----pass123----id123----data1----2023-02-20----data2----info2
 JaneSmith456@example.com----pass456----id456----data2----2023-03-10----data3----info3
 RobertJohnson789@example.com----pass789----id789----data3----2023-04-05----data4----info4
 MichaelBrown321@example.com----pass321----id321----data4----2023-05-12----data5----info5`;
 
-        const sampleDataset2 = `CourtneyRomero3718@hotmail.com----h0J4vsRJjE3Y----9e5f94bc-e8a4-4e73-b8be-63364c29d753----M.C504_BAY----2023-01-18----data6----info6
+    const sampleDataset2 = `CourtneyRomero3718@hotmail.com----h0J4vsRJjE3Y----9e5f94bc-e8a4-4e73-b8be-63364c29d753----M.C504_BAY----2023-01-18----data6----info6
 JohnDoe123@example.com----differentpass----anotherid----somedata----2023-02-22----data7----info7
 JaneSmith456@example.com----pass456----id456----data2----2023-03-10----data3----info3
 WilliamTaylor654@example.com----pass654----id654----data5----2023-04-08----data8----info8
 DavidAnderson987@example.com----pass987----id987----data6----2023-05-15----data9----info9`;
-        
-        // 初始化事件监听
-        function initEventListeners() {
-            compareBtn.addEventListener('click', compareDatasets);
-            clearDataset1.addEventListener('click', () => {
-                dataset1Input.value = '';
-                updateRecordCount(dataset1Input, dataset1Count);
-                resetResults();
-            });
-            clearDataset2.addEventListener('click', () => {
-                dataset2Input.value = '';
-                updateRecordCount(dataset2Input, dataset2Count);
-                resetResults();
-            });
-            sampleBtn.addEventListener('click', loadSampleData);
-            exportUniqueABtn.addEventListener('click', () => exportUniqueRows(uniqueRowsA, 'A'));
-            exportUniqueBBtn.addEventListener('click', () => exportUniqueRows(uniqueRowsB, 'B'));
-            exportDuplicatesBtn.addEventListener('click', exportDuplicateRows);
-            dataset1Input.addEventListener('input', () => updateRecordCount(dataset1Input, dataset1Count));
-            dataset2Input.addEventListener('input', () => updateRecordCount(dataset2Input, dataset2Count));
-            dedupInput.addEventListener('input', () => updateRecordCount(dedupInput, dedupCount));
-            dedupBtn.addEventListener('click', performDeduplication);
-            clearDedupInput.addEventListener('click', () => {
-                dedupInput.value = '';
-                updateRecordCount(dedupInput, dedupCount);
-                resetDedupResults();
-            });
-            exportDedupBtn.addEventListener('click', exportDeduplicatedData);
-            
-            document.getElementById('dataset1File').addEventListener('change', (e) => handleFileUpload(e, dataset1Input, dataset1Count));
-            document.getElementById('dataset2File').addEventListener('change', (e) => handleFileUpload(e, dataset2Input, dataset2Count));
-            document.getElementById('dedupFile').addEventListener('change', (e) => handleFileUpload(e, dedupInput, dedupCount));
-            
-            // 字段更新按钮事件
-            updateFieldsBtn.addEventListener('click', updateFieldOptions);
-            
-            // 保留范围验证按钮事件（新增）
-            validateRangeBtn.addEventListener('click', validateKeepRange);
-            // 保留范围输入框回车事件（新增）
-            keepRangeInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') validateKeepRange();
-            });
-            
-            // 拖放事件
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dataset1Input.addEventListener(eventName, preventDefaults, false);
-                dataset2Input.addEventListener(eventName, preventDefaults, false);
-                dedupInput.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dataset1Input.addEventListener(eventName, highlight, false);
-                dataset2Input.addEventListener(eventName, highlight, false);
-                dedupInput.addEventListener(eventName, highlight, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                dataset1Input.addEventListener(eventName, unhighlight, false);
-                dataset2Input.addEventListener(eventName, unhighlight, false);
-                dedupInput.addEventListener(eventName, unhighlight, false);
-            });
-            
-            dataset1Input.dataset.originalPlaceholder = dataset1Input.placeholder;
-            dataset2Input.dataset.originalPlaceholder = dataset2Input.placeholder;
-            dedupInput.dataset.originalPlaceholder = dedupInput.placeholder;
-            
-            dataset1Input.addEventListener('drop', (e) => handleDrop(e, dataset1Input, dataset1Count));
-            dataset2Input.addEventListener('drop', (e) => handleDrop(e, dataset2Input, dataset2Count));
-            dedupInput.addEventListener('drop', (e) => handleDrop(e, dedupInput, dedupCount));
-        }
-        
-        // 更新字段选项（新增：同步重置保留范围）
-        function updateFieldOptions() {
-            currentFieldCount = parseInt(fieldCountInput.value) || 4;
-            currentFieldCount = Math.max(1, Math.min(20, currentFieldCount)); // 限制在1-20之间
-            fieldCountInput.value = currentFieldCount;
-            
-            // 重置保留范围为默认值（1-当前字段数）
-            keepRangeStart = 1;
-            keepRangeEnd = currentFieldCount;
-            keepRangeInput.value = `${keepRangeStart}-${keepRangeEnd}`;
-            isRangeValid = true;
-            rangeError.classList.add('hidden');
-            updateRangeStatus();
-            
-            // 清空现有选项
-            fieldOptions.innerHTML = '';
-            dedupFieldOptions.innerHTML = '';
-            
-            // 添加整行匹配选项
-            const entireOption = document.createElement('label');
-            entireOption.className = 'inline-flex items-center';
-            entireOption.innerHTML = `
-                <input type="radio" name="field" value="entire" ${currentFieldType === 'entire' ? 'checked' : ''} class="w-4 h-4 text-primary focus:ring-primary">
-                <span class="ml-2 text-sm text-gray-300">整行完全匹配</span>
-            `;
-            fieldOptions.appendChild(entireOption);
-            
-            // 添加去重的整行匹配选项
-            const dedupEntireOption = document.createElement('label');
-            dedupEntireOption.className = 'inline-flex items-center';
-            dedupEntireOption.innerHTML = `
-                <input type="radio" name="dedupField" value="entire" checked class="w-4 h-4 text-primary focus:ring-primary">
-                <span class="ml-2 text-sm text-gray-300">整行完全匹配</span>
-            `;
-            dedupFieldOptions.appendChild(dedupEntireOption);
-            
-            // 添加字段选项
-            for (let i = 0; i < currentFieldCount; i++) {
-                const fieldOption = document.createElement('label');
-                fieldOption.className = 'inline-flex items-center';
-                fieldOption.innerHTML = `
-                    <input type="radio" name="field" value="${i}" ${currentFieldType === i.toString() ? 'checked' : ''} class="w-4 h-4 text-primary focus:ring-primary">
-                    <span class="ml-2 text-sm text-gray-300">字段${i+1}</span>
-                `;
-                fieldOptions.appendChild(fieldOption);
-                
-                // 添加去重的字段选项
-                const dedupFieldOption = document.createElement('label');
-                dedupFieldOption.className = 'inline-flex items-center';
-                dedupFieldOption.innerHTML = `
-                    <input type="radio" name="dedupField" value="${i}" class="w-4 h-4 text-primary focus:ring-primary">
-                    <span class="ml-2 text-sm text-gray-300">字段${i+1}</span>
-                `;
-                dedupFieldOptions.appendChild(dedupFieldOption);
-            }
-            
-            // 为新添加的radio按钮添加事件监听
-            document.querySelectorAll('input[name="field"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    currentFieldType = e.target.value;
-                });
-            });
-        }
-        
-        // 验证保留范围（新增）
-        function validateKeepRange() {
-            const rangeStr = keepRangeInput.value.trim();
-            // 正则匹配范围格式：支持 "1-4"、"3"（单个字段）
-            const rangeRegex = /^(?:(\d+)-(\d+)|(\d+))$/;
-            const match = rangeRegex.exec(rangeStr);
-            
-            if (!match) {
-                showRangeError('格式错误！示例：1-4 或 3');
-                return;
-            }
-            
-            // 解析起始和结束字段
-            if (match[3]) {
-                // 单个字段
-                keepRangeStart = parseInt(match[3]);
-                keepRangeEnd = keepRangeStart;
-            } else {
-                // 范围字段
-                keepRangeStart = parseInt(match[1]);
-                keepRangeEnd = parseInt(match[2]);
-            }
-            
-            // 验证字段范围有效性
-            if (keepRangeStart < 1 || keepRangeEnd > currentFieldCount || keepRangeStart > keepRangeEnd) {
-                showRangeError(`范围无效！请输入 1-${currentFieldCount} 之间的合法范围`);
-                return;
-            }
-            
-            // 验证通过
-            isRangeValid = true;
-            rangeError.classList.add('hidden');
-            updateRangeStatus();
-            alert(`保留范围验证通过：字段 ${keepRangeStart}-${keepRangeEnd}`);
-        }
-        
-        // 显示范围错误（新增）
-        function showRangeError(message) {
-            isRangeValid = false;
-            rangeError.textContent = message;
-            rangeError.classList.remove('hidden');
-            updateRangeStatus();
-        }
-        
-        // 更新范围状态显示（新增）
-        function updateRangeStatus() {
-            const statusText = `<i class="fa fa-check"></i> 范围有效（${keepRangeStart}-${keepRangeEnd}）`;
-            const invalidText = `<i class="fa fa-exclamation-circle"></i> 范围无效`;
-            
-            if (isRangeValid) {
-                dataset1RangeStatus.innerHTML = statusText;
-                dataset2RangeStatus.innerHTML = statusText;
-                dedupRangeStatus.innerHTML = statusText;
-                dataset1RangeStatus.classList.remove('hidden', 'text-danger');
-                dataset2RangeStatus.classList.remove('hidden', 'text-danger');
-                dedupRangeStatus.classList.remove('hidden', 'text-danger');
-                dataset1RangeStatus.classList.add('text-secondary');
-                dataset2RangeStatus.classList.add('text-secondary');
-                dedupRangeStatus.classList.add('text-secondary');
-            } else {
-                dataset1RangeStatus.innerHTML = invalidText;
-                dataset2RangeStatus.innerHTML = invalidText;
-                dedupRangeStatus.innerHTML = invalidText;
-                dataset1RangeStatus.classList.remove('hidden', 'text-secondary');
-                dataset2RangeStatus.classList.remove('hidden', 'text-secondary');
-                dedupRangeStatus.classList.remove('hidden', 'text-secondary');
-                dataset1RangeStatus.classList.add('text-danger');
-                dataset2RangeStatus.classList.add('text-danger');
-                dedupRangeStatus.classList.add('text-danger');
-            }
-        }
-        
-        // 截取字段范围（新增）
-        function truncateFields(line) {
-            const fields = line.split('----');
-            // 截取保留范围的字段（注意：数组索引从0开始，字段从1开始）
-            const truncated = fields.slice(keepRangeStart - 1, keepRangeEnd);
-            return truncated.join('----');
-        }
-        
-        // 防止默认拖放行为
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        // 高亮拖放区域
-        function highlight() {
-            this.classList.add('border-primary');
-            this.classList.add('bg-gray-800');
-            this.placeholder = this.dataset.placeholder;
-        }
-        
-        // 取消高亮
-        function unhighlight() {
-            this.classList.remove('border-primary');
-            this.classList.remove('bg-gray-800');
-            this.placeholder = this.dataset.originalPlaceholder || this.placeholder;
-        }
-        
-        // 处理文件拖放
-        function handleDrop(e, textarea, counter) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length) {
-                handleFiles(files, textarea, counter);
-            }
-        }
-        
-        // 处理文件上传
-        function handleFileUpload(e, textarea, counter) {
-            const files = e.target.files;
-            if (files.length) {
-                handleFiles(files, textarea, counter);
-            }
-        }
-        
-        // 读取文件内容
-        function handleFiles(files, textarea, counter) {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (file.type.match(/text.*/)) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        textarea.value = e.target.result;
-                        updateRecordCount(textarea, counter);
-                    }
-                    reader.readAsText(file);
-                }
-            }
-        }
-        
-        // 重置结果
-        function resetResults() {
-            currentMatches = [];
-            uniqueRowsA = [];
-            uniqueRowsB = [];
-            duplicateRows = [];
-            
-            exportUniqueABtn.disabled = true;
-            exportUniqueBBtn.disabled = true;
-            exportDuplicatesBtn.disabled = true;
-            exportUniqueABtn.classList.add('opacity-50', 'cursor-not-allowed');
-            exportUniqueBBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            exportDuplicatesBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            
-            emptyResultState.classList.remove('hidden');
-            loadingResultState.classList.add('hidden');
-            resultsContainer.classList.add('hidden');
-            matchCount.textContent = '等待对比...';
-            
-            dataset1Total.textContent = '0';
-            dataset1Unique.textContent = '0';
-            dataset2Total.textContent = '0';
-            dataset2Unique.textContent = '0';
-            commonRecords.textContent = '0';
-            dataset1MatchRate.textContent = '0%';
-            dataset2MatchRate.textContent = '0%';
-            overallMatchRate.textContent = '0%';
-        }
-        
-        // 重置去重结果
-        function resetDedupResults() {
-            dedupResult = [];
-            exportDedupBtn.disabled = true;
-            exportDedupBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            originalCount.textContent = '0';
-            uniqueCount.textContent = '0';
-            duplicateCount.textContent = '0';
-        }
-        
-        // 更新记录计数
-        function updateRecordCount(textarea, counterElement) {
-            const lines = textarea.value.trim().split('\n').filter(line => line.trim() !== '');
-            counterElement.textContent = `${lines.length} 条记录`;
-        }
-        
-        // 加载示例数据
-        function loadSampleData() {
-            dataset1Input.value = sampleDataset1;
-            dataset2Input.value = sampleDataset2;
+    
+    // 初始化事件监听
+    function initEventListeners() {
+        compareBtn.addEventListener('click', compareDatasets);
+        clearDataset1.addEventListener('click', () => {
+            dataset1Input.value = '';
             updateRecordCount(dataset1Input, dataset1Count);
+            resetResults();
+        });
+        clearDataset2.addEventListener('click', () => {
+            dataset2Input.value = '';
             updateRecordCount(dataset2Input, dataset2Count);
             resetResults();
+        });
+        sampleBtn.addEventListener('click', loadSampleData);
+        exportUniqueABtn.addEventListener('click', () => exportUniqueRows(uniqueRowsA, 'A'));
+        exportUniqueBBtn.addEventListener('click', () => exportUniqueRows(uniqueRowsB, 'B'));
+        exportDuplicatesBtn.addEventListener('click', exportDuplicateRows);
+        dataset1Input.addEventListener('input', () => updateRecordCount(dataset1Input, dataset1Count));
+        dataset2Input.addEventListener('input', () => updateRecordCount(dataset2Input, dataset2Count));
+        dedupInput.addEventListener('input', () => updateRecordCount(dedupInput, dedupCount));
+        dedupBtn.addEventListener('click', performDeduplication);
+        clearDedupInput.addEventListener('click', () => {
+            dedupInput.value = '';
+            updateRecordCount(dedupInput, dedupCount);
+            resetDedupResults();
+        });
+        exportDedupBtn.addEventListener('click', exportDeduplicatedData);
+        
+        document.getElementById('tab6-dataset1File').addEventListener('change', (e) => handleFileUpload(e, dataset1Input, dataset1Count));
+        document.getElementById('tab6-dataset2File').addEventListener('change', (e) => handleFileUpload(e, dataset2Input, dataset2Count));
+        document.getElementById('tab6-dedupFile').addEventListener('change', (e) => handleFileUpload(e, dedupInput, dedupCount));
+        
+        // 字段更新按钮事件
+        updateFieldsBtn.addEventListener('click', updateFieldOptions);
+        
+        // 保留范围验证按钮事件
+        validateRangeBtn.addEventListener('click', validateKeepRange);
+        // 保留范围输入框回车事件
+        keepRangeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') validateKeepRange();
+        });
+        
+        // 拖放事件
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dataset1Input.addEventListener(eventName, preventDefaults, false);
+            dataset2Input.addEventListener(eventName, preventDefaults, false);
+            dedupInput.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dataset1Input.addEventListener(eventName, highlight, false);
+            dataset2Input.addEventListener(eventName, highlight, false);
+            dedupInput.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dataset1Input.addEventListener(eventName, unhighlight, false);
+            dataset2Input.addEventListener(eventName, unhighlight, false);
+            dedupInput.addEventListener(eventName, unhighlight, false);
+        });
+        
+        dataset1Input.dataset.originalPlaceholder = dataset1Input.placeholder;
+        dataset2Input.dataset.originalPlaceholder = dataset2Input.placeholder;
+        dedupInput.dataset.originalPlaceholder = dedupInput.placeholder;
+        
+        dataset1Input.addEventListener('drop', (e) => handleDrop(e, dataset1Input, dataset1Count));
+        dataset2Input.addEventListener('drop', (e) => handleDrop(e, dataset2Input, dataset2Count));
+        dedupInput.addEventListener('drop', (e) => handleDrop(e, dedupInput, dedupCount));
+    }
+    
+    // 更新字段选项
+    function updateFieldOptions() {
+        currentFieldCount = parseInt(fieldCountInput.value) || 4;
+        currentFieldCount = Math.max(1, Math.min(20, currentFieldCount)); // 限制在1-20之间
+        fieldCountInput.value = currentFieldCount;
+        
+        // 重置保留范围为默认值（1-当前字段数）
+        keepRangeStart = 1;
+        keepRangeEnd = currentFieldCount;
+        keepRangeInput.value = `${keepRangeStart}-${keepRangeEnd}`;
+        isRangeValid = true;
+        rangeError.classList.add('hidden');
+        updateRangeStatus();
+        
+        // 清空现有选项
+        fieldOptions.innerHTML = '';
+        dedupFieldOptions.innerHTML = '';
+        
+        // 添加整行匹配选项
+        const entireOption = document.createElement('label');
+        entireOption.className = 'inline-flex items-center';
+        entireOption.innerHTML = `
+            <input type="radio" name="tab6-field" value="entire" ${currentFieldType === 'entire' ? 'checked' : ''} class="w-4 h-4 text-primary focus:ring-primary">
+            <span class="ml-2 text-sm text-gray-300">整行完全匹配</span>
+        `;
+        fieldOptions.appendChild(entireOption);
+        
+        // 添加去重的整行匹配选项
+        const dedupEntireOption = document.createElement('label');
+        dedupEntireOption.className = 'inline-flex items-center';
+        dedupEntireOption.innerHTML = `
+            <input type="radio" name="tab6-dedupField" value="entire" checked class="w-4 h-4 text-primary focus:ring-primary">
+            <span class="ml-2 text-sm text-gray-300">整行完全匹配</span>
+        `;
+        dedupFieldOptions.appendChild(dedupEntireOption);
+        
+        // 添加字段选项
+        for (let i = 0; i < currentFieldCount; i++) {
+            const fieldOption = document.createElement('label');
+            fieldOption.className = 'inline-flex items-center';
+            fieldOption.innerHTML = `
+                <input type="radio" name="tab6-field" value="${i}" ${currentFieldType === i.toString() ? 'checked' : ''} class="w-4 h-4 text-primary focus:ring-primary">
+                <span class="ml-2 text-sm text-gray-300">字段${i+1}</span>
+            `;
+            fieldOptions.appendChild(fieldOption);
+            
+            // 添加去重的字段选项
+            const dedupFieldOption = document.createElement('label');
+            dedupFieldOption.className = 'inline-flex items-center';
+            dedupFieldOption.innerHTML = `
+                <input type="radio" name="tab6-dedupField" value="${i}" class="w-4 h-4 text-primary focus:ring-primary">
+                <span class="ml-2 text-sm text-gray-300">字段${i+1}</span>
+            `;
+            dedupFieldOptions.appendChild(dedupFieldOption);
         }
         
-        // 对比数据集（新增：应用保留范围）
-        function compareDatasets() {
-            if (!isRangeValid) {
-                alert('请先验证有效的保留范围！');
-                return;
-            }
-            
-            const dataset1 = dataset1Input.value.trim();
-            const dataset2 = dataset2Input.value.trim();
-            
-            if (!dataset1 || !dataset2) {
-                alert('请输入两组数据后再进行对比');
-                return;
-            }
-            
-            showLoadingState();
-            
-            setTimeout(() => {
-                // 预处理：截取保留范围的字段
-                const lines1 = dataset1.split('\n').filter(line => line.trim() !== '').map(truncateFields);
-                const lines2 = dataset2.split('\n').filter(line => line.trim() !== '').map(truncateFields);
-                
-                const fieldValue = document.querySelector('input[name="field"]:checked').value;
-                currentFieldType = fieldValue;
-                const checkEntireLine = fieldValue === 'entire';
-                const fieldIndex = checkEntireLine ? null : parseInt(fieldValue, 10);
-                
-                // 注意：此处字段索引已基于保留后的字段（如保留1-4，则字段0-3对应原字段1-4）
-                const dataset1Map = createDatasetMap(lines1, checkEntireLine, fieldIndex);
-                const dataset2Map = createDatasetMap(lines2, checkEntireLine, fieldIndex);
-                
-                const { commonKeys, uniqueKeysA, uniqueKeysB } = findKeys(dataset1Map, dataset2Map);
-                
-                uniqueRowsA = extractUniqueRows(lines1, dataset1Map, uniqueKeysA, checkEntireLine, fieldIndex);
-                uniqueRowsB = extractUniqueRows(lines2, dataset2Map, uniqueKeysB, checkEntireLine, fieldIndex);
-                duplicateRows = extractDuplicateRows(lines1, lines2, dataset1Map, dataset2Map, commonKeys);
-                
-                const matches = generateMatches(commonKeys, dataset1Map, dataset2Map, lines1, lines2);
-                currentMatches = matches;
-                
-                updateStatistics(
-                    lines1.length, lines2.length, 
-                    dataset1Map.size, dataset2Map.size, 
-                    matches.length,
-                    uniqueRowsA.length,
-                    uniqueRowsB.length
-                );
-                
-                displayMatches(matches, checkEntireLine, fieldIndex);
-                
-                matchCount.textContent = `${matches.length} 个重复项`;
-                
-                exportUniqueABtn.disabled = false;
-                exportUniqueBBtn.disabled = false;
-                exportDuplicatesBtn.disabled = false;
-                exportUniqueABtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                exportUniqueBBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                exportDuplicatesBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }, 800);
+        // 为新添加的radio按钮添加事件监听
+        document.querySelectorAll('input[name="tab6-field"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                currentFieldType = e.target.value;
+            });
+        });
+    }
+    
+    // 验证保留范围
+    function validateKeepRange() {
+        const rangeStr = keepRangeInput.value.trim();
+        // 正则匹配范围格式：支持 "1-4"、"3"（单个字段）
+        const rangeRegex = /^(?:(\d+)-(\d+)|(\d+))$/;
+        const match = rangeRegex.exec(rangeStr);
+        
+        if (!match) {
+            showRangeError('格式错误！示例：1-4 或 3');
+            return;
         }
         
-        // 执行去重（新增：应用保留范围）
-        function performDeduplication() {
-            if (!isRangeValid) {
-                alert('请先验证有效的保留范围！');
-                return;
+        // 解析起始和结束字段
+        if (match[3]) {
+            // 单个字段
+            keepRangeStart = parseInt(match[3]);
+            keepRangeEnd = keepRangeStart;
+        } else {
+            // 范围字段
+            keepRangeStart = parseInt(match[1]);
+            keepRangeEnd = parseInt(match[2]);
+        }
+        
+        // 验证字段范围有效性
+        if (keepRangeStart < 1 || keepRangeEnd > currentFieldCount || keepRangeStart > keepRangeEnd) {
+            showRangeError(`范围无效！请输入 1-${currentFieldCount} 之间的合法范围`);
+            return;
+        }
+        
+        // 验证通过
+        isRangeValid = true;
+        rangeError.classList.add('hidden');
+        updateRangeStatus();
+        showGlobalNotification(`保留范围验证通过：字段 ${keepRangeStart}-${keepRangeEnd}`, 'success');
+    }
+    
+    // 显示范围错误
+    function showRangeError(message) {
+        isRangeValid = false;
+        rangeError.textContent = message;
+        rangeError.classList.remove('hidden');
+        updateRangeStatus();
+        showGlobalNotification(message, 'error');
+    }
+    
+    // 更新范围状态显示
+    function updateRangeStatus() {
+        const statusText = `<i class="fa fa-check"></i> 范围有效（${keepRangeStart}-${keepRangeEnd}）`;
+        const invalidText = `<i class="fa fa-exclamation-circle"></i> 范围无效`;
+        
+        if (isRangeValid) {
+            dataset1RangeStatus.innerHTML = statusText;
+            dataset2RangeStatus.innerHTML = statusText;
+            dedupRangeStatus.innerHTML = statusText;
+            dataset1RangeStatus.classList.remove('hidden', 'text-danger');
+            dataset2RangeStatus.classList.remove('hidden', 'text-danger');
+            dedupRangeStatus.classList.remove('hidden', 'text-danger');
+            dataset1RangeStatus.classList.add('text-secondary');
+            dataset2RangeStatus.classList.add('text-secondary');
+            dedupRangeStatus.classList.add('text-secondary');
+        } else {
+            dataset1RangeStatus.innerHTML = invalidText;
+            dataset2RangeStatus.innerHTML = invalidText;
+            dedupRangeStatus.innerHTML = invalidText;
+            dataset1RangeStatus.classList.remove('hidden', 'text-secondary');
+            dataset2RangeStatus.classList.remove('hidden', 'text-secondary');
+            dedupRangeStatus.classList.remove('hidden', 'text-secondary');
+            dataset1RangeStatus.classList.add('text-danger');
+            dataset2RangeStatus.classList.add('text-danger');
+            dedupRangeStatus.classList.add('text-danger');
+        }
+    }
+    
+    // 截取字段范围
+    function truncateFields(line) {
+        const fields = line.split('----');
+        // 截取保留范围的字段（注意：数组索引从0开始，字段从1开始）
+        const truncated = fields.slice(keepRangeStart - 1, keepRangeEnd);
+        return truncated.join('----');
+    }
+    
+    // 防止默认拖放行为
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // 高亮拖放区域
+    function highlight() {
+        this.classList.add('border-primary');
+        this.classList.add('bg-gray-800');
+        this.placeholder = this.dataset.placeholder;
+    }
+    
+    // 取消高亮
+    function unhighlight() {
+        this.classList.remove('border-primary');
+        this.classList.remove('bg-gray-800');
+        this.placeholder = this.dataset.originalPlaceholder || this.placeholder;
+    }
+    
+    // 处理文件拖放
+    function handleDrop(e, textarea, counter) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) {
+            handleFiles(files, textarea, counter);
+        }
+    }
+    
+    // 处理文件上传
+    function handleFileUpload(e, textarea, counter) {
+        const files = e.target.files;
+        if (files.length) {
+            handleFiles(files, textarea, counter);
+        }
+    }
+    
+    // 读取文件内容
+    function handleFiles(files, textarea, counter) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.match(/text.*/)) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    textarea.value = e.target.result;
+                    updateRecordCount(textarea, counter);
+                    showGlobalNotification(`文件加载成功：${file.name}`, 'success');
+                }
+                reader.readAsText(file);
+            } else {
+                showGlobalNotification('请选择文本文件', 'error');
             }
-            
-            const data = dedupInput.value.trim();
-            
-            if (!data) {
-                alert('请输入需要去重的数据');
-                return;
-            }
-            
+        }
+    }
+    
+    // 重置结果
+    function resetResults() {
+        currentMatches = [];
+        uniqueRowsA = [];
+        uniqueRowsB = [];
+        duplicateRows = [];
+        
+        exportUniqueABtn.disabled = true;
+        exportUniqueBBtn.disabled = true;
+        exportDuplicatesBtn.disabled = true;
+        exportUniqueABtn.classList.add('opacity-50', 'cursor-not-allowed');
+        exportUniqueBBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        exportDuplicatesBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        emptyResultState.classList.remove('hidden');
+        loadingResultState.classList.add('hidden');
+        resultsContainer.classList.add('hidden');
+        matchCount.textContent = '等待对比...';
+        
+        dataset1Total.textContent = '0';
+        dataset1Unique.textContent = '0';
+        dataset2Total.textContent = '0';
+        dataset2Unique.textContent = '0';
+        commonRecords.textContent = '0';
+        dataset1MatchRate.textContent = '0%';
+        dataset2MatchRate.textContent = '0%';
+        overallMatchRate.textContent = '0%';
+    }
+    
+    // 重置去重结果
+    function resetDedupResults() {
+        dedupResult = [];
+        exportDedupBtn.disabled = true;
+        exportDedupBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        originalCount.textContent = '0';
+        uniqueCount.textContent = '0';
+        duplicateCount.textContent = '0';
+    }
+    
+    // 更新记录计数
+    function updateRecordCount(textarea, counterElement) {
+        const lines = textarea.value.trim().split('\n').filter(line => line.trim() !== '');
+        counterElement.textContent = `${lines.length} 条记录`;
+        
+        // 更新统计信息中的总记录数
+        if (textarea === dataset1Input) {
+            dataset1Total.textContent = lines.length;
+        } else if (textarea === dataset2Input) {
+            dataset2Total.textContent = lines.length;
+        }
+    }
+    
+    // 加载示例数据
+    function loadSampleData() {
+        dataset1Input.value = sampleDataset1;
+        dataset2Input.value = sampleDataset2;
+        updateRecordCount(dataset1Input, dataset1Count);
+        updateRecordCount(dataset2Input, dataset2Count);
+        resetResults();
+        showGlobalNotification('示例数据加载成功', 'info');
+    }
+    
+    // 对比数据集
+    function compareDatasets() {
+        if (!isRangeValid) {
+            showGlobalNotification('请先验证有效的保留范围！', 'warning');
+            return;
+        }
+        
+        const dataset1 = dataset1Input.value.trim();
+        const dataset2 = dataset2Input.value.trim();
+        
+        if (!dataset1 || !dataset2) {
+            showGlobalNotification('请输入两组数据后再进行对比', 'warning');
+            return;
+        }
+        
+        showLoadingState();
+        
+        setTimeout(() => {
             // 预处理：截取保留范围的字段
-            const lines = data.split('\n').filter(line => line.trim() !== '').map(truncateFields);
-            const fieldValue = document.querySelector('input[name="dedupField"]:checked').value;
+            const lines1 = dataset1.split('\n').filter(line => line.trim() !== '').map(truncateFields);
+            const lines2 = dataset2.split('\n').filter(line => line.trim() !== '').map(truncateFields);
+            
+            const fieldValue = document.querySelector('input[name="tab6-field"]:checked').value;
+            currentFieldType = fieldValue;
             const checkEntireLine = fieldValue === 'entire';
             const fieldIndex = checkEntireLine ? null : parseInt(fieldValue, 10);
             
-            const map = new Map();
-            const uniqueLines = [];
+            // 注意：此处字段索引已基于保留后的字段（如保留1-4，则字段0-3对应原字段1-4）
+            const dataset1Map = createDatasetMap(lines1, checkEntireLine, fieldIndex);
+            const dataset2Map = createDatasetMap(lines2, checkEntireLine, fieldIndex);
             
-            lines.forEach(line => {
-                let key;
-                if (checkEntireLine) {
-                    key = line;
-                } else {
-                    const fields = line.split('----');
-                    key = fields.length > fieldIndex ? fields[fieldIndex] : line;
-                }
-                
-                if (!map.has(key)) {
-                    map.set(key, true);
-                    uniqueLines.push(line);
-                }
-            });
+            const { commonKeys, uniqueKeysA, uniqueKeysB } = findKeys(dataset1Map, dataset2Map);
             
-            dedupResult = uniqueLines;
+            uniqueRowsA = extractUniqueRows(lines1, dataset1Map, uniqueKeysA, checkEntireLine, fieldIndex);
+            uniqueRowsB = extractUniqueRows(lines2, dataset2Map, uniqueKeysB, checkEntireLine, fieldIndex);
+            duplicateRows = extractDuplicateRows(lines1, lines2, dataset1Map, dataset2Map, commonKeys);
             
-            originalCount.textContent = lines.length;
-            uniqueCount.textContent = uniqueLines.length;
-            duplicateCount.textContent = lines.length - uniqueLines.length;
+            const matches = generateMatches(commonKeys, dataset1Map, dataset2Map, lines1, lines2);
+            currentMatches = matches;
             
-            exportDedupBtn.disabled = false;
-            exportDedupBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            updateStatistics(
+                lines1.length, lines2.length, 
+                dataset1Map.size, dataset2Map.size, 
+                matches.length,
+                uniqueRowsA.length,
+                uniqueRowsB.length
+            );
+            
+            displayMatches(matches, checkEntireLine, fieldIndex);
+            
+            matchCount.textContent = `${matches.length} 个重复项`;
+            
+            exportUniqueABtn.disabled = false;
+            exportUniqueBBtn.disabled = false;
+            exportDuplicatesBtn.disabled = false;
+            exportUniqueABtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            exportUniqueBBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            exportDuplicatesBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            showGlobalNotification(`对比完成！发现 ${matches.length} 个重复项`, 'success');
+        }, 800);
+    }
+    
+    // 执行去重
+    function performDeduplication() {
+        if (!isRangeValid) {
+            showGlobalNotification('请先验证有效的保留范围！', 'warning');
+            return;
         }
         
-        // 创建数据集映射
-        function createDatasetMap(lines, checkEntireLine, fieldIndex) {
-            const map = new Map();
-            
-            lines.forEach((line, index) => {
-                const lineNumber = index + 1;
-                let key;
-                
-                if (checkEntireLine) {
-                    key = line;
-                } else {
-                    const fields = line.split('----');
-                    if (fieldIndex < fields.length) {
-                        key = fields[fieldIndex];
-                    } else {
-                        return;
-                    }
-                }
-                
-                if (!map.has(key)) {
-                    map.set(key, {
-                        lines: [],
-                        lineNumbers: []
-                    });
-                }
-                map.get(key).lines.push(line);
-                map.get(key).lineNumbers.push(lineNumber);
-            });
-            
-            return map;
+        const data = dedupInput.value.trim();
+        
+        if (!data) {
+            showGlobalNotification('请输入需要去重的数据', 'warning');
+            return;
         }
         
-        // 查找共同和唯一的键
-        function findKeys(map1, map2) {
-            const commonKeys = [];
-            const uniqueKeysA = [];
-            const uniqueKeysB = [];
-            
-            for (const key of map1.keys()) {
-                if (map2.has(key)) {
-                    commonKeys.push(key);
-                } else {
-                    uniqueKeysA.push(key);
-                }
-            }
-            
-            for (const key of map2.keys()) {
-                if (!map1.has(key)) {
-                    uniqueKeysB.push(key);
-                }
-            }
-            
-            return { commonKeys, uniqueKeysA, uniqueKeysB };
-        }
+        // 预处理：截取保留范围的字段
+        const lines = data.split('\n').filter(line => line.trim() !== '').map(truncateFields);
+        const fieldValue = document.querySelector('input[name="tab6-dedupField"]:checked').value;
+        const checkEntireLine = fieldValue === 'entire';
+        const fieldIndex = checkEntireLine ? null : parseInt(fieldValue, 10);
         
-        // 提取唯一行
-        function extractUniqueRows(lines, datasetMap, uniqueKeys, checkEntireLine, fieldIndex) {
-            const uniqueRows = [];
-            
-            uniqueKeys.forEach(key => {
-                if (datasetMap.has(key)) {
-                    uniqueRows.push(...datasetMap.get(key).lines);
-                }
-            });
-            
-            return uniqueRows;
-        }
+        const map = new Map();
+        const uniqueLines = [];
         
-        // 提取重复行
-        function extractDuplicateRows(lines1, lines2, map1, map2, commonKeys) {
-            const duplicates = [];
-            
-            commonKeys.forEach(key => {
-                if (map1.has(key) && map2.has(key)) {
-                    duplicates.push({
-                        key,
-                        dataset1: map1.get(key).lines,
-                        dataset2: map2.get(key).lines
-                    });
-                }
-            });
-            
-            return duplicates;
-        }
-        
-        // 生成匹配结果
-        function generateMatches(commonKeys, map1, map2, lines1, lines2) {
-            return commonKeys.map(key => ({
-                key,
-                dataset1Lines: map1.get(key).lineNumbers,
-                dataset2Lines: map2.get(key).lineNumbers,
-                dataset1Examples: map1.get(key).lines,
-                dataset2Examples: map2.get(key).lines
-            }));
-        }
-        
-        // 显示匹配结果
-        function displayMatches(matches, checkEntireLine, fieldIndex) {
-            matchesList.innerHTML = '';
-            const fragment = document.createDocumentFragment();
-            
-            loadingResultState.classList.add('hidden');
-            emptyResultState.classList.add('hidden');
-            resultsContainer.classList.remove('hidden');
-            
-            if (matches.length === 0) {
-                noMatches.classList.remove('hidden');
-                matchesList.classList.add('hidden');
+        lines.forEach(line => {
+            let key;
+            if (checkEntireLine) {
+                key = line;
             } else {
-                noMatches.classList.add('hidden');
-                matchesList.classList.remove('hidden');
+                const fields = line.split('----');
+                key = fields.length > fieldIndex ? fields[fieldIndex] : line;
+            }
+            
+            if (!map.has(key)) {
+                map.set(key, true);
+                uniqueLines.push(line);
+            }
+        });
+        
+        dedupResult = uniqueLines;
+        
+        originalCount.textContent = lines.length;
+        uniqueCount.textContent = uniqueLines.length;
+        duplicateCount.textContent = lines.length - uniqueLines.length;
+        
+        exportDedupBtn.disabled = false;
+        exportDedupBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        
+        showGlobalNotification(`去重完成！原始 ${lines.length} 条，去重后 ${uniqueLines.length} 条`, 'success');
+    }
+    
+    // 创建数据集映射
+    function createDatasetMap(lines, checkEntireLine, fieldIndex) {
+        const map = new Map();
+        
+        lines.forEach((line, index) => {
+            const lineNumber = index + 1;
+            let key;
+            
+            if (checkEntireLine) {
+                key = line;
+            } else {
+                const fields = line.split('----');
+                if (fieldIndex < fields.length) {
+                    key = fields[fieldIndex];
+                } else {
+                    return;
+                }
+            }
+            
+            if (!map.has(key)) {
+                map.set(key, {
+                    lines: [],
+                    lineNumbers: []
+                });
+            }
+            map.get(key).lines.push(line);
+            map.get(key).lineNumbers.push(lineNumber);
+        });
+        
+        return map;
+    }
+    
+    // 查找共同和唯一的键
+    function findKeys(map1, map2) {
+        const commonKeys = [];
+        const uniqueKeysA = [];
+        const uniqueKeysB = [];
+        
+        for (const key of map1.keys()) {
+            if (map2.has(key)) {
+                commonKeys.push(key);
+            } else {
+                uniqueKeysA.push(key);
+            }
+        }
+        
+        for (const key of map2.keys()) {
+            if (!map1.has(key)) {
+                uniqueKeysB.push(key);
+            }
+        }
+        
+        return { commonKeys, uniqueKeysA, uniqueKeysB };
+    }
+    
+    // 提取唯一行
+    function extractUniqueRows(lines, datasetMap, uniqueKeys, checkEntireLine, fieldIndex) {
+        const uniqueRows = [];
+        
+        uniqueKeys.forEach(key => {
+            if (datasetMap.has(key)) {
+                uniqueRows.push(...datasetMap.get(key).lines);
+            }
+        });
+        
+        return uniqueRows;
+    }
+    
+    // 提取重复行
+    function extractDuplicateRows(lines1, lines2, map1, map2, commonKeys) {
+        const duplicates = [];
+        
+        commonKeys.forEach(key => {
+            if (map1.has(key) && map2.has(key)) {
+                duplicates.push({
+                    key,
+                    dataset1: map1.get(key).lines,
+                    dataset2: map2.get(key).lines
+                });
+            }
+        });
+        
+        return duplicates;
+    }
+    
+    // 生成匹配结果
+    function generateMatches(commonKeys, map1, map2, lines1, lines2) {
+        return commonKeys.map(key => ({
+            key,
+            dataset1Lines: map1.get(key).lineNumbers,
+            dataset2Lines: map2.get(key).lineNumbers,
+            dataset1Examples: map1.get(key).lines,
+            dataset2Examples: map2.get(key).lines
+        }));
+    }
+    
+    // 显示匹配结果
+    function displayMatches(matches, checkEntireLine, fieldIndex) {
+        matchesList.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        
+        loadingResultState.classList.add('hidden');
+        emptyResultState.classList.add('hidden');
+        resultsContainer.classList.remove('hidden');
+        
+        if (matches.length === 0) {
+            noMatches.classList.remove('hidden');
+            matchesList.classList.add('hidden');
+        } else {
+            noMatches.classList.add('hidden');
+            matchesList.classList.remove('hidden');
+            
+            matches.forEach((match, index) => {
+                const isOdd = index % 2 === 0;
+                const card = document.createElement('div');
+                card.className = `border rounded-lg overflow-hidden ${isOdd ? 'border-gray-700 bg-gray-800' : 'border-primary/30 bg-primary/5'}`;
                 
-                matches.forEach((match, index) => {
-                    const isOdd = index % 2 === 0;
-                    const card = document.createElement('div');
-                    card.className = `border rounded-lg overflow-hidden ${isOdd ? 'border-gray-700 bg-gray-800' : 'border-primary/30 bg-primary/5'}`;
-                    
-                    const header = document.createElement('div');
-                    header.className = 'bg-gray-700 px-4 py-2 border-b border-gray-600';
-                    header.innerHTML = `
-                        <div class="font-medium text-white mb-1">重复值（保留字段 ${keepRangeStart}-${keepRangeEnd}）:</div>
-                        <div class="text-sm font-mono truncate max-w-full text-gray-300">${escapeHtml(match.key)}</div>
+                const header = document.createElement('div');
+                header.className = 'bg-gray-700 px-4 py-2 border-b border-gray-600';
+                header.innerHTML = `
+                    <div class="font-medium text-white mb-1">重复值（保留字段 ${keepRangeStart}-${keepRangeEnd}）:</div>
+                    <div class="text-sm font-mono truncate max-w-full text-gray-300">${escapeHtml(match.key)}</div>
+                `;
+                
+                const content = document.createElement('div');
+                content.className = 'p-4';
+                
+                const dataset1Section = document.createElement('div');
+                dataset1Section.className = 'mb-4';
+                
+                const dataset1Header = document.createElement('div');
+                dataset1Header.className = 'text-sm font-medium text-dataset1 mb-2';
+                dataset1Header.textContent = `数据集 A 中出现 ${match.dataset1Lines.length} 次：`;
+                
+                const dataset1LinesList = document.createElement('ul');
+                dataset1LinesList.className = 'space-y-2 text-xs';
+                
+                match.dataset1Lines.forEach((lineNum, i) => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <div class="text-neutral">行 ${lineNum}（保留后）:</div>
+                        <div class="bg-gray-900 p-2 rounded font-mono overflow-x-auto scrollbar-thin text-gray-300">
+                            ${escapeHtml(match.dataset1Examples[i])}
+                        </div>
                     `;
-                    
-                    const content = document.createElement('div');
-                    content.className = 'p-4';
-                    
-                    const dataset1Section = document.createElement('div');
-                    dataset1Section.className = 'mb-4';
-                    
-                    const dataset1Header = document.createElement('div');
-                    dataset1Header.className = 'text-sm font-medium text-dataset1 mb-2';
-                    dataset1Header.textContent = `数据集 A 中出现 ${match.dataset1Lines.length} 次：`;
-                    
-                    const dataset1LinesList = document.createElement('ul');
-                    dataset1LinesList.className = 'space-y-2 text-xs';
-                    
-                    match.dataset1Lines.forEach((lineNum, i) => {
-                        const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <div class="text-neutral">行 ${lineNum}（保留后）:</div>
-                            <div class="bg-gray-900 p-2 rounded font-mono overflow-x-auto scrollbar-thin text-gray-300">
-                                ${escapeHtml(match.dataset1Examples[i])}
-                            </div>
-                        `;
-                        dataset1LinesList.appendChild(listItem);
-                    });
-                    
-                    dataset1Section.appendChild(dataset1Header);
-                    dataset1Section.appendChild(dataset1LinesList);
-                    
-                    const dataset2Section = document.createElement('div');
-                    
-                    const dataset2Header = document.createElement('div');
-                    dataset2Header.className = 'text-sm font-medium text-dataset2 mb-2';
-                    dataset2Header.textContent = `数据集 B 中出现 ${match.dataset2Lines.length} 次：`;
-                    
-                    const dataset2LinesList = document.createElement('ul');
-                    dataset2LinesList.className = 'space-y-2 text-xs';
-                    
-                    match.dataset2Lines.forEach((lineNum, i) => {
-                        const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <div class="text-neutral">行 ${lineNum}（保留后）:</div>
-                            <div class="bg-gray-900 p-2 rounded font-mono overflow-x-auto scrollbar-thin text-gray-300">
-                                ${escapeHtml(match.dataset2Examples[i])}
-                            </div>
-                        `;
-                        dataset2LinesList.appendChild(listItem);
-                    });
-                    
-                    dataset2Section.appendChild(dataset2Header);
-                    dataset2Section.appendChild(dataset2LinesList);
-                    
-                    content.appendChild(dataset1Section);
-                    content.appendChild(dataset2Section);
-                    card.appendChild(header);
-                    card.appendChild(content);
-                    
-                    fragment.appendChild(card);
+                    dataset1LinesList.appendChild(listItem);
                 });
                 
-                matchesList.appendChild(fragment);
-            }
-        }
-        
-        // 更新统计信息
-        function updateStatistics(total1, total2, unique1, unique2, matches, uniqueRowsAcount, uniqueRowsBcount) {
-            dataset1Total.textContent = total1;
-            dataset1Unique.textContent = uniqueRowsAcount;
-            dataset2Total.textContent = total2;
-            dataset2Unique.textContent = uniqueRowsBcount;
-            commonRecords.textContent = matches;
-            
-            const rate1 = total1 > 0 ? Math.round((matches / total1) * 100) : 0;
-            const rate2 = total2 > 0 ? Math.round((matches / total2) * 100) : 0;
-            const overallRate = (total1 + total2) > 0 ? Math.round((matches * 2 / (total1 + total2)) * 100) : 0;
-            
-            dataset1MatchRate.textContent = `${rate1}%`;
-            dataset2MatchRate.textContent = `${rate2}%`;
-            overallMatchRate.textContent = `${overallRate}%`;
-        }
-        
-        // 导出唯一行（保留范围）
-        function exportUniqueRows(rows, datasetName) {
-            if (rows.length === 0) {
-                alert(`数据集${datasetName}没有唯一行可导出`);
-                return;
-            }
-            
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0, 10);
-            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
-            const fileName = `数据集${datasetName}_唯一行_保留字段${keepRangeStart}-${keepRangeEnd}_${dateStr}_${timeStr}.txt`;
-            
-            let content = `数据集${datasetName}的唯一行（保留字段 ${keepRangeStart}-${keepRangeEnd}） - 生成时间: ${now.toLocaleString()}\n`;
-            content += `总条数: ${rows.length}\n\n`;
-            content += rows.join('\n');
-            
-            downloadFile(content, fileName);
-        }
-        
-        // 导出重复行（保留范围）
-        function exportDuplicateRows() {
-            if (duplicateRows.length === 0) {
-                alert('没有重复行可导出');
-                return;
-            }
-            
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0, 10);
-            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
-            const fileName = `重复行_保留字段${keepRangeStart}-${keepRangeEnd}_${dateStr}_${timeStr}.txt`;
-            
-            let content = `重复行记录（保留字段 ${keepRangeStart}-${keepRangeEnd}） - 生成时间: ${now.toLocaleString()}\n`;
-            content += `总重复值数量: ${duplicateRows.length}\n\n`;
-            
-            duplicateRows.forEach((duplicate, index) => {
-                content += `===== 重复值 ${index + 1}: ${duplicate.key} =====\n`;
-                content += `数据集A中的记录 (${duplicate.dataset1.length}条):\n`;
-                duplicate.dataset1.forEach(line => {
-                    content += `${line}\n`;
+                dataset1Section.appendChild(dataset1Header);
+                dataset1Section.appendChild(dataset1LinesList);
+                
+                const dataset2Section = document.createElement('div');
+                
+                const dataset2Header = document.createElement('div');
+                dataset2Header.className = 'text-sm font-medium text-dataset2 mb-2';
+                dataset2Header.textContent = `数据集 B 中出现 ${match.dataset2Lines.length} 次：`;
+                
+                const dataset2LinesList = document.createElement('ul');
+                dataset2LinesList.className = 'space-y-2 text-xs';
+                
+                match.dataset2Lines.forEach((lineNum, i) => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <div class="text-neutral">行 ${lineNum}（保留后）:</div>
+                        <div class="bg-gray-900 p-2 rounded font-mono overflow-x-auto scrollbar-thin text-gray-300">
+                            ${escapeHtml(match.dataset2Examples[i])}
+                        </div>
+                    `;
+                    dataset2LinesList.appendChild(listItem);
                 });
                 
-                content += `\n数据集B中的记录 (${duplicate.dataset2.length}条):\n`;
-                duplicate.dataset2.forEach(line => {
-                    content += `${line}\n`;
-                });
-                content += `\n----------------------------------------\n\n`;
+                dataset2Section.appendChild(dataset2Header);
+                dataset2Section.appendChild(dataset2LinesList);
+                
+                content.appendChild(dataset1Section);
+                content.appendChild(dataset2Section);
+                card.appendChild(header);
+                card.appendChild(content);
+                
+                fragment.appendChild(card);
             });
             
-            downloadFile(content, fileName);
+            matchesList.appendChild(fragment);
+        }
+    }
+    
+    // 更新统计信息
+    function updateStatistics(total1, total2, unique1, unique2, matches, uniqueRowsAcount, uniqueRowsBcount) {
+        dataset1Total.textContent = total1;
+        dataset1Unique.textContent = uniqueRowsAcount;
+        dataset2Total.textContent = total2;
+        dataset2Unique.textContent = uniqueRowsBcount;
+        commonRecords.textContent = matches;
+        
+        const rate1 = total1 > 0 ? Math.round((matches / total1) * 100) : 0;
+        const rate2 = total2 > 0 ? Math.round((matches / total2) * 100) : 0;
+        const overallRate = (total1 + total2) > 0 ? Math.round((matches * 2 / (total1 + total2)) * 100) : 0;
+        
+        dataset1MatchRate.textContent = `${rate1}%`;
+        dataset2MatchRate.textContent = `${rate2}%`;
+        overallMatchRate.textContent = `${overallRate}%`;
+    }
+    
+    // 导出唯一行（保留范围）
+    function exportUniqueRows(rows, datasetName) {
+        if (rows.length === 0) {
+            showGlobalNotification(`数据集${datasetName}没有唯一行可导出`, 'warning');
+            return;
         }
         
-        // 导出去重结果（保留范围）
-        function exportDeduplicatedData() {
-            if (dedupResult.length === 0) {
-                alert('没有去重结果可导出');
-                return;
-            }
-            
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0, 10);
-            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
-            const fileName = `去重结果_保留字段${keepRangeStart}-${keepRangeEnd}_${dateStr}_${timeStr}.txt`;
-            
-            let content = `去重结果（保留字段 ${keepRangeStart}-${keepRangeEnd}） - 生成时间: ${now.toLocaleString()}\n`;
-            content += `原始条数: ${originalCount.textContent}\n`;
-            content += `去重后条数: ${dedupResult.length}\n`;
-            content += `重复条数: ${duplicateCount.textContent}\n\n`;
-            content += dedupResult.join('\n');
-            
-            downloadFile(content, fileName);
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
+        const fileName = `数据集${datasetName}_唯一行_保留字段${keepRangeStart}-${keepRangeEnd}_${dateStr}_${timeStr}.txt`;
+        
+        let content = `数据集${datasetName}的唯一行（保留字段 ${keepRangeStart}-${keepRangeEnd}） - 生成时间: ${now.toLocaleString()}\n`;
+        content += `总条数: ${rows.length}\n\n`;
+        content += rows.join('\n');
+        
+        downloadFile(content, fileName);
+    }
+    
+    // 导出重复行（保留范围）
+    function exportDuplicateRows() {
+        if (duplicateRows.length === 0) {
+            showGlobalNotification('没有重复行可导出', 'warning');
+            return;
         }
         
-        // 下载文件
-        function downloadFile(content, fileName) {
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
+        const fileName = `重复行_保留字段${keepRangeStart}-${keepRangeEnd}_${dateStr}_${timeStr}.txt`;
+        
+        let content = `重复行记录（保留字段 ${keepRangeStart}-${keepRangeEnd}） - 生成时间: ${now.toLocaleString()}\n`;
+        content += `总重复值数量: ${duplicateRows.length}\n\n`;
+        
+        duplicateRows.forEach((duplicate, index) => {
+            content += `===== 重复值 ${index + 1}: ${duplicate.key} =====\n`;
+            content += `数据集A中的记录 (${duplicate.dataset1.length}条):\n`;
+            duplicate.dataset1.forEach(line => {
+                content += `${line}\n`;
+            });
             
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            
-            document.body.appendChild(a);
-            a.click();
-            
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 0);
+            content += `\n数据集B中的记录 (${duplicate.dataset2.length}条):\n`;
+            duplicate.dataset2.forEach(line => {
+                content += `${line}\n`;
+            });
+            content += `\n----------------------------------------\n\n`;
+        });
+        
+        downloadFile(content, fileName);
+    }
+    
+    // 导出去重结果（保留范围）
+    function exportDeduplicatedData() {
+        if (dedupResult.length === 0) {
+            showGlobalNotification('没有去重结果可导出', 'warning');
+            return;
         }
         
-        // 显示加载状态
-        function showLoadingState() {
-            emptyResultState.classList.add('hidden');
-            resultsContainer.classList.add('hidden');
-            loadingResultState.classList.remove('hidden');
-            matchCount.textContent = '对比中...';
-        }
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
+        const fileName = `去重结果_保留字段${keepRangeStart}-${keepRangeEnd}_${dateStr}_${timeStr}.txt`;
         
-        // HTML转义
-        function escapeHtml(unsafe) {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+        let content = `去重结果（保留字段 ${keepRangeStart}-${keepRangeEnd}） - 生成时间: ${now.toLocaleString()}\n`;
+        content += `原始条数: ${originalCount.textContent}\n`;
+        content += `去重后条数: ${dedupResult.length}\n`;
+        content += `重复条数: ${duplicateCount.textContent}\n\n`;
+        content += dedupResult.join('\n');
         
-        // 初始化
-        function init() {
-            initEventListeners();
-            updateFieldOptions(); // 初始化字段选项和保留范围
-        }
+        downloadFile(content, fileName);
+    }
+    
+    // 下载文件
+    function downloadFile(content, fileName) {
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showGlobalNotification(`文件已下载：${fileName}`, 'success');
+        }, 0);
+    }
+    
+    // 显示加载状态
+    function showLoadingState() {
+        emptyResultState.classList.add('hidden');
+        resultsContainer.classList.add('hidden');
+        loadingResultState.classList.remove('hidden');
+        matchCount.textContent = '对比中...';
+    }
+    
+    // 初始化
+    function init() {
+        initEventListeners();
+        updateFieldOptions(); // 初始化字段选项和保留范围
+        updateRecordCount(dataset1Input, dataset1Count);
+        updateRecordCount(dataset2Input, dataset2Count);
+        updateRecordCount(dedupInput, dedupCount);
+    }
+    
+    // 页面加载完成后初始化
+    init();
+}
+
+// ==================== 页面初始化 ====================
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化各个标签页
+    initTab1();
+    initTab2();
+    initTab4();
+    initTab6();
+    
+    // 初始化标签3（UUID分类工具）的事件监听
+    document.getElementById('tab3-fileInput').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const fileName = this.files[0].name;
+            showGlobalNotification(`文件已选择：${fileName}`, 'info');
+        }
+    });
+});
+</script>
 </body>
 </html>
