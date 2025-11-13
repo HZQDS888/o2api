@@ -1,7 +1,7 @@
 const Imap = require('node-imap');
 const simpleParser = require("mailparser").simpleParser;
 
-// ===================== 全局配置与工具函数 =====================
+// ===================== 全局配置与工具函数（优化点：抽离常量+统一工具）=====================
 const CONFIG = {
   OAUTH_TOKEN_URL: 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token',
   GRAPH_API_BASE_URL: 'https://graph.microsoft.com/v1.0/me/mailFolders',
@@ -25,17 +25,12 @@ const CONFIG = {
     '垃圾邮件': 'junkemail',
     'junk': 'junkemail'
   },
-  // 固定查询目标：收件箱 + 垃圾箱
-  TARGET_MAILBOXES: [
-    CONFIG.MAILBOX_MAP.inbox,
-    CONFIG.MAILBOX_MAP.junkemail
-  ],
   REQUEST_TIMEOUT: 10000, // 请求超时10秒
   SUPPORTED_METHODS: ['GET', 'POST'], // 支持的请求方法
-  REQUIRED_PARAMS: ['refresh_token', 'client_id', 'email', 'mailbox'] // 必要参数（mailbox保留兼容）
+  REQUIRED_PARAMS: ['refresh_token', 'client_id', 'email', 'mailbox'] // 必要参数
 };
 
-// 请求超时封装
+// 请求超时封装（优化点：避免无限等待）
 async function fetchWithTimeout(url, options = {}, timeout = CONFIG.REQUEST_TIMEOUT) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -49,7 +44,7 @@ async function fetchWithTimeout(url, options = {}, timeout = CONFIG.REQUEST_TIME
   }
 }
 
-// HTML特殊字符转义（防XSS）
+// HTML特殊字符转义（防XSS，优化点：强化安全性）
 function escapeHtml(str) {
   if (!str) return '';
   return str
@@ -60,42 +55,30 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// JSON响应特殊字符转义
+// JSON响应特殊字符转义（优化点：避免前端解析异常）
 function escapeJson(str) {
   if (!str) return str;
-  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"'); // 移除\n双重转义
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
 }
 
-// 参数校验
+// 参数校验（优化点：细粒度校验，提前拦截无效请求）
 function validateParams(params) {
   const { email } = params;
+  // 邮箱格式校验
   const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailReg.test(email)) return new Error("邮箱格式无效，请输入正确的邮箱地址");
+  // Token和ClientID长度校验（简单防错）
   if (params.refresh_token?.length < 50) return new Error("refresh_token格式无效");
   if (params.client_id?.length < 10) return new Error("client_id格式无效");
   return null;
 }
 
-// 新增：筛选多个文件夹中最新的邮件
-function getLatestEmail(emailsList) {
-  // 过滤无邮件结果，提取有效邮件
-  const validEmails = emailsList.flat().filter(Boolean);
-  if (validEmails.length === 0) return null;
-
-  // 统一转换为时间戳排序，取最新一封
-  return validEmails.sort((a, b) => {
-    const timeA = new Date(a.date).getTime();
-    const timeB = new Date(b.date).getTime();
-    return timeB - timeA;
-  })[0];
-}
-
 // ===================== 核心业务函数 =====================
-// 生成邮件HTML
+// 生成邮件HTML（优化点：中文文案优化）
 function generateEmailHtml(emailData) {
   const { send, subject, text, html: emailHtml, date } = emailData;
   const escapedText = escapeHtml(text || '');
-  const escapedHtml = escapeHtml(emailHtml) || `<p>${escapedText.replace(/\n/g, '<br>')}</p>`; // 强化XSS防护
+  const escapedHtml = emailHtml || `<p>${escapedText.replace(/\n/g, '<br>')}</p>`;
 
   return `
     <!DOCTYPE html>
@@ -133,7 +116,7 @@ function generateEmailHtml(emailData) {
   `;
 }
 
-// 获取access_token
+// 获取access_token（优化点：替换为超时请求，中文错误）
 async function get_access_token(refresh_token, client_id) {
   try {
     const response = await fetchWithTimeout(CONFIG.OAUTH_TOKEN_URL, {
@@ -165,7 +148,7 @@ const generateAuthString = (user, accessToken) => {
   return Buffer.from(authString).toString('base64');
 };
 
-// 检查Graph API权限
+// 检查Graph API权限（优化点：超时请求，中文日志）
 async function graph_api(refresh_token, client_id) {
   try {
     const response = await fetchWithTimeout(CONFIG.OAUTH_TOKEN_URL, {
@@ -186,24 +169,20 @@ async function graph_api(refresh_token, client_id) {
 
     const responseText = await response.text();
     const data = JSON.parse(responseText);
-    // 兼容Mail.Read和Mail.ReadWrite权限
-    const hasMailPermission = [
-      'https://graph.microsoft.com/Mail.Read',
-      'https://graph.microsoft.com/Mail.ReadWrite'
-    ].some(scope => data.scope?.includes(scope));
+    const hasMailPermission = data.scope?.indexOf('https://graph.microsoft.com/Mail.ReadWrite') !== -1;
 
     return {
       access_token: data.access_token,
       status: hasMailPermission
     };
   } catch (error) {
-    console.error(`[${new Date().toLocaleString()}] Graph API权限检查失败：`, error);
+    console.error('Graph API权限检查失败：', error);
     return { access_token: '', status: false };
   }
 }
 
-// 获取单个文件夹的最新邮件（返回单封）
-async function get_single_folder_latest_email(access_token, mailbox) {
+// 获取邮件（优化点：超时请求，中文错误，空数据处理）
+async function get_emails(access_token, mailbox, returnRaw = false) {
   if (!access_token) {
     throw new Error("access_token不存在");
   }
@@ -220,28 +199,30 @@ async function get_single_folder_latest_email(access_token, mailbox) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[${new Date().toLocaleString()}] 获取${mailbox}文件夹邮件失败：`, errorText);
-      return null; // 单个文件夹失败不中断整体流程
+      throw new Error(`获取邮件失败：状态码${response.status}，响应：${errorText}`);
     }
 
     const responseData = await response.json();
     const emails = responseData.value || [];
+
     if (emails.length === 0) return null;
 
-    return {
-      send: emails[0]['from']?.['emailAddress']?.['address'] || '未知发件人',
-      subject: emails[0]['subject'] || '无主题',
-      text: emails[0]['bodyPreview'] || '',
-      html: emails[0]['body']?.['content'] || '',
-      date: emails[0]['createdDateTime'] || new Date().toISOString(),
-    };
+    const response_emails = emails.map(item => ({
+      send: item['from']?.['emailAddress']?.['address'] || '未知发件人',
+      subject: item['subject'] || '无主题',
+      text: item['bodyPreview'] || '',
+      html: item['body']?.['content'] || '',
+      date: item['createdDateTime'] || new Date().toISOString(),
+    }));
+
+    return returnRaw ? response_emails[0] : response_emails;
   } catch (error) {
-    console.error(`[${new Date().toLocaleString()}] 获取${mailbox}文件夹邮件异常：`, error);
-    return null;
+    console.error('获取邮件异常：', error);
+    throw new Error(`邮件获取异常：${error.message}`);
   }
 }
 
-// ===================== 主入口函数 =====================
+// ===================== 主入口函数（优化点：全流程中文提示+错误分类）=====================
 module.exports = async (req, res) => {
   try {
     // 1. 限制请求方法
@@ -252,12 +233,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 2. 密码认证
+    // 2. 获取参数并验证密码
     const isGet = req.method === 'GET';
     const { password } = isGet ? req.query : req.body;
     const expectedPassword = process.env.PASSWORD;
 
-    if (expectedPassword && password !== expectedPassword) {
+    if (password !== expectedPassword && expectedPassword) {
       return res.status(401).json({
         code: 4010,
         error: '认证失败 请联系小黑-QQ:113575320 购买权限再使用'
@@ -286,113 +267,113 @@ module.exports = async (req, res) => {
     }
 
     // 5. 优先尝试Graph API
-    console.log(`[${new Date().toLocaleString()}] 【开始】检查Graph API权限`);
+    console.log("【开始】检查Graph API权限");
     const graph_api_result = await graph_api(refresh_token, client_id);
 
     if (graph_api_result.status) {
-      console.log(`[${new Date().toLocaleString()}] 【成功】Graph API权限通过，查询收件箱+垃圾箱`);
-      
-      // 并行获取两个文件夹的最新邮件
-      const emailsList = await Promise.all(
-        CONFIG.TARGET_MAILBOXES.map(mailbox => get_single_folder_latest_email(graph_api_result.access_token, mailbox))
-      );
+      console.log("【成功】Graph API权限通过，使用Graph API获取邮件");
+      // 中文文件夹映射
+      const normalizedMailbox = CONFIG.MAILBOX_MAP[mailbox.toLowerCase()];
+      if (!normalizedMailbox) {
+        const supportedMailboxes = Object.keys(CONFIG.MAILBOX_MAP).filter(key => !/[a-z]/.test(key)).join('、');
+        return res.status(400).json({
+          code: 4003,
+          error: `不支持的文件夹名称：${mailbox}，支持的中文文件夹：${supportedMailboxes}`
+        });
+      }
+      mailbox = normalizedMailbox;
 
-      // 筛选最新邮件
-      const latestEmail = getLatestEmail(emailsList);
-      if (!latestEmail) {
+      // 获取邮件并处理响应
+      const emailData = await get_emails(graph_api_result.access_token, mailbox, true);
+      if (!emailData) {
+        const mailboxCN = Object.keys(CONFIG.MAILBOX_MAP).find(key => CONFIG.MAILBOX_MAP[key] === mailbox);
         return res.status(200).json({
           code: 2001,
-          message: "收件箱和垃圾箱均无邮件",
+          message: `当前“${mailboxCN}”文件夹无邮件`,
           data: null
         });
       }
 
-      // 响应处理
       if (response_type === 'html') {
-        const htmlResponse = generateEmailHtml(latestEmail);
+        const htmlResponse = generateEmailHtml(emailData);
         return res.status(200).send(htmlResponse);
       } else {
         return res.status(200).json({
           code: 200,
-          message: '已获取收件箱和垃圾箱中最新邮件',
-          data: [latestEmail]
+          message: '邮件获取成功',
+          data: [emailData]
         });
       }
     }
 
     // 6. 降级使用IMAP协议
-    console.log(`[${new Date().toLocaleString()}] 【降级】Graph API权限不足或失败，使用IMAP协议`);
+    console.log("【降级】Graph API权限不足或失败，使用IMAP协议获取邮件");
     const access_token = await get_access_token(refresh_token, client_id);
     const authString = generateAuthString(email, access_token);
     const imap = new Imap({ ...CONFIG.IMAP_CONFIG, user: email, xoauth2: authString });
 
-    // IMAP连接逻辑（Promise化重构）
+    // IMAP连接逻辑（优化点：async/await统一异步写法，中文错误）
     imap.once("ready", async () => {
-      const imapEmails = [];
       try {
-        // 循环查询两个目标文件夹
-        for (const targetBox of CONFIG.TARGET_MAILBOXES) {
-          try {
-            // 打开文件夹
-            await new Promise((resolve, reject) => {
-              imap.openBox(targetBox, true, (err, box) => err ? reject(err) : resolve(box));
-            });
+        // 打开邮箱文件夹
+        await new Promise((resolve, reject) => {
+          imap.openBox(mailbox, true, (err, box) => err ? reject(err) : resolve(box));
+        });
 
-            // 搜索最新邮件
-            const results = await new Promise((resolve, reject) => {
-              imap.search(["ALL"], (err, results) => err ? reject(err) : resolve(results));
-            });
+        // 搜索最新邮件
+        const results = await new Promise((resolve, reject) => {
+          imap.search(["ALL"], (err, results) => err ? reject(err) : resolve(results));
+        });
 
-            if (results.length > 0) {
-              // 获取并解析最新一封
-              const latestMail = results.slice(-1);
-              const f = imap.fetch(latestMail, { bodies: "" });
-              await new Promise((resolve) => {
-                f.on("message", async (msg) => {
-                  const stream = await new Promise((resolve) => msg.on("body", resolve));
-                  const mail = await simpleParser(stream);
-                  imapEmails.push({
-                    send: escapeJson(mail.from?.text || '未知发件人'),
-                    subject: escapeJson(mail.subject || '无主题'),
-                    text: escapeJson(mail.text || ''),
-                    html: mail.html || '',
-                    date: mail.date || new Date().toISOString()
-                  });
-                  resolve();
-                });
-              });
-            }
-          } catch (err) {
-            console.error(`[${new Date().toLocaleString()}] IMAP获取${targetBox}文件夹邮件失败：`, err);
-            continue; // 单个文件夹失败不中断
-          }
-        }
-
-        // 筛选最新邮件
-        const latestEmail = getLatestEmail([imapEmails]);
-        if (!latestEmail) {
+        if (results.length === 0) {
           imap.end();
           return res.status(200).json({
             code: 2001,
-            message: "收件箱和垃圾箱均无邮件",
+            message: `当前“${mailbox}”文件夹无邮件`,
             data: null
           });
         }
 
-        // 响应处理
-        if (response_type === 'html') {
-          const htmlResponse = generateEmailHtml(latestEmail);
-          res.status(200).send(htmlResponse);
-        } else {
-          res.status(200).json({
-            code: 200,
-            message: '已获取收件箱和垃圾箱中最新邮件',
-            data: [latestEmail] // 统一返回数组格式，兼容Graph API
-          });
-        }
+        // 获取并解析最新邮件（优化点：async/await替换回调）
+        const latestMail = results.slice(-1);
+        const f = imap.fetch(latestMail, { bodies: "" });
+
+        f.on("message", async (msg) => {
+          try {
+            const stream = await new Promise((resolve) => msg.on("body", resolve));
+            const mail = await simpleParser(stream);
+
+            const responseData = {
+              send: escapeJson(mail.from?.text || '未知发件人'),
+              subject: escapeJson(mail.subject || '无主题'),
+              text: escapeJson(mail.text || ''),
+              html: mail.html || `<p>${escapeHtml(mail.text || '').replace(/\n/g, '<br>')}</p>`,
+              date: mail.date || new Date().toLocaleString()
+            };
+
+            if (response_type === 'html') {
+              const htmlResponse = generateEmailHtml(responseData);
+              res.status(200).send(htmlResponse);
+            } else {
+              res.status(200).json({
+                code: 200,
+                message: '邮件获取成功',
+                data: responseData
+              });
+            }
+          } catch (err) {
+            console.error('解析邮件失败：', err);
+            res.status(500).json({
+              code: 5003,
+              error: `解析邮件失败：${err.message}`
+            });
+          }
+        });
+
+        f.once("end", () => imap.end());
       } catch (err) {
         imap.end();
-        console.error(`[${new Date().toLocaleString()}] IMAP操作总异常：`, err);
+        console.error('IMAP获取邮件失败：', err);
         res.status(500).json({
           code: 5002,
           error: `IMAP操作失败：${err.message}`
@@ -402,7 +383,7 @@ module.exports = async (req, res) => {
 
     // IMAP错误处理
     imap.once('error', (err) => {
-      console.error(`[${new Date().toLocaleString()}] IMAP连接错误：`, err);
+      console.error('IMAP连接错误：', err);
       res.status(500).json({
         code: 5001,
         error: `IMAP连接失败：${err.message}`
@@ -423,7 +404,7 @@ module.exports = async (req, res) => {
     } else if (error.message.includes('HTTP错误！状态码：403')) {
       statusCode = 403;
       errorCode = 4031;
-      error.message = '权限不足，需开启Mail.Read或Mail.ReadWrite权限';
+      error.message = '权限不足，需开启Mail.ReadWrite权限';
     } else if (error.message.includes('请求超时')) {
       statusCode = 504;
       errorCode = 5041;
