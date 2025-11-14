@@ -1,7 +1,7 @@
 const Imap = require('node-imap');
 const simpleParser = require("mailparser").simpleParser;
 
-// ===================== 全局配置与工具函数（仅新增文件夹配置，其他不变）=====================
+// ===================== 全局配置与工具函数（不变）=====================
 const CONFIG = {
   OAUTH_TOKEN_URL: 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token',
   GRAPH_API_BASE_URL: 'https://graph.microsoft.com/v1.0/me/mailFolders',
@@ -28,10 +28,16 @@ const CONFIG = {
   REQUEST_TIMEOUT: 10000,
   SUPPORTED_METHODS: ['GET', 'POST'],
   REQUIRED_PARAMS: ['refresh_token', 'client_id', 'email', 'mailbox'],
-  // 修复：区分Graph API和IMAP的文件夹名称（兼容不同账户）
   TARGET_FOLDERS: {
-    graph: ['inbox', 'junkemail'], // Graph API标准名称
-    imap: ['INBOX', 'Junk'] // IMAP标准名称（Outlook垃圾箱默认叫Junk）
+    graph: ['inbox', 'junkemail'],
+    imap: ['INBOX', 'Junk'],
+    // 新增：文件夹名称映射（用于显示中文来源）
+    chineseName: {
+      'inbox': '收件箱',
+      'junkemail': '垃圾箱',
+      'INBOX': '收件箱',
+      'Junk': '垃圾箱'
+    }
   }
 };
 
@@ -85,12 +91,14 @@ function validateParams(params) {
   return null;
 }
 
-// ===================== 核心业务函数（修复文件夹兼容性，其他不变）=====================
-// 生成邮件HTML（不变）
+// ===================== 核心业务函数（新增邮件来源标识）=====================
+// 生成邮件HTML（修改：新增来源文件夹显示）
 function generateEmailHtml(emailData) {
-  const { send, subject, text, html: emailHtml, date } = emailData;
+  const { send, subject, text, html: emailHtml, date, folderSource } = emailData;
   const escapedText = escapeHtml(text || '');
   const escapedHtml = emailHtml || `<p>${escapedText.replace(/\n/g, '<br>')}</p>`;
+  // 新增：来源文件夹中文显示（默认“未知文件夹”）
+  const folderCN = folderSource || '未知文件夹';
 
   return `
     <!DOCTYPE html>
@@ -108,6 +116,7 @@ function generateEmailHtml(emailData) {
           .email-meta span { display: block; margin-bottom: 5px; }
           .email-content { color: #1a202c; }
           .email-text { white-space: pre-line; }
+          .folder-source { color: #718096; font-style: italic; }
         </style>
       </head>
       <body>
@@ -117,6 +126,8 @@ function generateEmailHtml(emailData) {
             <div class="email-meta">
               <span><strong>发件人：</strong>${escapeHtml(send || '未知发件人')}</span>
               <span><strong>发送日期：</strong>${new Date(date).toLocaleString() || '未知日期'}</span>
+              <!-- 新增：显示来源文件夹 -->
+              <span class="folder-source"><strong>来源文件夹：</strong>${escapeHtml(folderCN)}</span>
             </div>
           </div>
           <div class="email-content">
@@ -193,7 +204,7 @@ async function graph_api(refresh_token, client_id) {
   }
 }
 
-// 原有单个文件夹取件（修复：文件夹不存在时返回null，不中断流程）
+// 单个文件夹取件（修改：新增folderSource字段，标识来源）
 async function get_single_folder_email(access_token, mailbox) {
   try {
     const url = `${CONFIG.GRAPH_API_BASE_URL}/${mailbox}/messages?$top=1&$orderby=receivedDateTime desc`;
@@ -205,7 +216,6 @@ async function get_single_folder_email(access_token, mailbox) {
       },
     });
 
-    // 修复：如果文件夹不存在（404），返回null
     if (!response.ok) {
       console.warn(`文件夹${mailbox}访问失败，状态码：${response.status}`);
       return null;
@@ -221,14 +231,16 @@ async function get_single_folder_email(access_token, mailbox) {
       text: email['bodyPreview'] || '',
       html: email['body']?.['content'] || '',
       date: email['createdDateTime'] || new Date().toISOString(),
+      // 新增：来源文件夹（中文）
+      folderSource: CONFIG.TARGET_FOLDERS.chineseName[mailbox] || '未知文件夹'
     };
   } catch (error) {
     console.error(`获取${mailbox}邮件失败：`, error);
-    return null; // 修复：任何错误都返回null，避免影响另一文件夹
+    return null;
   }
 }
 
-// Graph API双文件夹取最新邮件（不变，依赖上面的修复）
+// Graph API双文件夹取最新邮件（不变，继承folderSource字段）
 async function get_dual_folder_latest_email_graph(access_token) {
   const [inboxEmail, junkEmail] = await Promise.all([
     get_single_folder_email(access_token, CONFIG.TARGET_FOLDERS.graph[0]),
@@ -237,7 +249,7 @@ async function get_dual_folder_latest_email_graph(access_token) {
   return getLatestEmail(inboxEmail, junkEmail);
 }
 
-// IMAP双文件夹取最新邮件（修复：用IMAP标准文件夹名称Junk，失败时跳过）
+// IMAP双文件夹取最新邮件（修改：新增folderSource字段）
 async function get_dual_folder_latest_email_imap(imapConfig) {
   const imap = new Imap(imapConfig);
   let inboxEmail = null;
@@ -246,10 +258,11 @@ async function get_dual_folder_latest_email_imap(imapConfig) {
   const fetchEmails = new Promise((resolve, reject) => {
     imap.once('ready', async () => {
       try {
-        // 1. 获取收件箱最新邮件（IMAP标准名称INBOX）
+        // 1. 获取收件箱邮件（新增来源标识）
         try {
+          const inboxFolder = CONFIG.TARGET_FOLDERS.imap[0];
           await new Promise((res, rej) => {
-            imap.openBox(CONFIG.TARGET_FOLDERS.imap[0], true, (err) => err ? rej(err) : res());
+            imap.openBox(inboxFolder, true, (err) => err ? rej(err) : res());
           });
           const inboxResults = await new Promise((res, rej) => {
             imap.search(["ALL"], (err, resArr) => err ? rej(err) : res(resArr));
@@ -266,7 +279,9 @@ async function get_dual_folder_latest_email_imap(imapConfig) {
                   subject: escapeJson(mail.subject || '无主题'),
                   text: escapeJson(mail.text || ''),
                   html: mail.html || `<p>${escapeHtml(mail.text || '').replace(/\n/g, '<br>')}</p>`,
-                  date: mail.date || new Date().toISOString()
+                  date: mail.date || new Date().toISOString(),
+                  // 新增：来源文件夹（中文）
+                  folderSource: CONFIG.TARGET_FOLDERS.chineseName[inboxFolder] || '未知文件夹'
                 };
                 res();
               });
@@ -276,10 +291,11 @@ async function get_dual_folder_latest_email_imap(imapConfig) {
           console.error('IMAP获取收件箱邮件失败：', err);
         }
 
-        // 2. 获取垃圾箱最新邮件（修复：用IMAP标准名称Junk，失败时跳过）
+        // 2. 获取垃圾箱邮件（新增来源标识）
         try {
+          const junkFolder = CONFIG.TARGET_FOLDERS.imap[1];
           await new Promise((res, rej) => {
-            imap.openBox(CONFIG.TARGET_FOLDERS.imap[1], true, (err) => err ? rej(err) : res());
+            imap.openBox(junkFolder, true, (err) => err ? rej(err) : res());
           });
           const junkResults = await new Promise((res, rej) => {
             imap.search(["ALL"], (err, resArr) => err ? rej(err) : res(resArr));
@@ -296,7 +312,9 @@ async function get_dual_folder_latest_email_imap(imapConfig) {
                   subject: escapeJson(mail.subject || '无主题'),
                   text: escapeJson(mail.text || ''),
                   html: mail.html || `<p>${escapeHtml(mail.text || '').replace(/\n/g, '<br>')}</p>`,
-                  date: mail.date || new Date().toISOString()
+                  date: mail.date || new Date().toISOString(),
+                  // 新增：来源文件夹（中文）
+                  folderSource: CONFIG.TARGET_FOLDERS.chineseName[junkFolder] || '未知文件夹'
                 };
                 res();
               });
@@ -304,7 +322,6 @@ async function get_dual_folder_latest_email_imap(imapConfig) {
           }
         } catch (err) {
           console.error('IMAP获取垃圾箱邮件失败：', err);
-          // 垃圾箱获取失败，不中断，继续返回收件箱邮件
         }
 
         imap.end();
@@ -384,7 +401,7 @@ module.exports = async (req, res) => {
         return res.status(200).json({
           code: 200,
           message: '邮件获取成功',
-          data: [latestEmail]
+          data: [latestEmail] // JSON响应会包含folderSource字段
         });
       }
     }
@@ -411,7 +428,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         code: 200,
         message: '邮件获取成功',
-        data: [latestEmailImap]
+        data: [latestEmailImap] // JSON响应会包含folderSource字段
       });
     }
 
