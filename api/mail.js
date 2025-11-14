@@ -10,18 +10,16 @@ const CONFIG = {
     port: 993,
     tls: true,
     tlsOptions: { rejectUnauthorized: false },
-    connTimeout: 15000, // 延长超时时间
-    authTimeout: 15000
+    connTimeout: 20000,
+    authTimeout: 20000,
+    debug: console.log // 开启IMAP调试日志，查看底层通信
   },
-  // 扩展文件夹别名映射（支持常见邮箱）
-  MAILBOX_ALIASES: {
-    'inbox': ['inbox', '收件箱', 'INBOX'],
-    'sentitems': ['sentitems', '已发送', 'Sent Items', '[Gmail]/已发送邮件'],
-    'draft': ['draft', 'drafts', '草稿', 'Drafts'],
-    'deleteditems': ['deleteditems', '删除邮件', 'Deleted Items', '[Gmail]/已删除邮件'],
-    'junkemail': ['junkemail', 'junk', '垃圾邮件', 'Junk Email', '[Gmail]/垃圾邮件']
-  },
-  REQUEST_TIMEOUT: 15000,
+  // 垃圾箱所有常见别名（覆盖Outlook/Gmail/国内邮箱）
+  JUNK_FOLDERS: [
+    'junkemail', 'Junk Email', '垃圾邮件', 
+    'junk', '[Gmail]/垃圾邮件', 'Spam', '垃圾'
+  ],
+  REQUEST_TIMEOUT: 20000,
   SUPPORTED_METHODS: ['GET', 'POST'],
   REQUIRED_PARAMS: ['refresh_token', 'client_id', 'email']
 };
@@ -36,7 +34,7 @@ async function fetchWithTimeout(url, options = {}, timeout = CONFIG.REQUEST_TIME
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
-    throw new Error(error.name === "AbortError" ? "请求超时（超过15秒）" : error.message);
+    throw new Error(error.name === "AbortError" ? "请求超时（超过20秒）" : error.message);
   }
 }
 
@@ -65,26 +63,6 @@ function validateParams(params) {
   if (params.refresh_token?.length < 50) return new Error("refresh_token格式无效");
   if (params.client_id?.length < 10) return new Error("client_id格式无效");
   return null;
-}
-
-// 判断文件夹是否为目标文件夹（支持别名匹配）
-function isTargetMailbox(folderName) {
-  const lowerName = folderName.toLowerCase().replace(/[\/\[\]]/g, ''); // 移除特殊字符
-  return Object.values(CONFIG.MAILBOX_ALIASES).some(aliases => 
-    aliases.some(alias => alias.toLowerCase().replace(/[\/\[\]]/g, '') === lowerName)
-  );
-}
-
-// 获取文件夹中文名称
-function getFolderCNName(folderName) {
-  const lowerName = folderName.toLowerCase().replace(/[\/\[\]]/g, '');
-  for (const [type, aliases] of Object.entries(CONFIG.MAILBOX_ALIASES)) {
-    const matchAlias = aliases.find(alias => alias.toLowerCase().replace(/[\/\[\]]/g, '') === lowerName);
-    if (matchAlias) {
-      return aliases.find(alias => /^[\u4e00-\u9fa5]+$/.test(alias)) || matchAlias;
-    }
-  }
-  return folderName;
 }
 
 // ===================== 核心业务函数 =====================
@@ -130,7 +108,7 @@ function generateEmailHtml(emailData) {
   `;
 }
 
-// 获取access_token
+// 获取access_token（强制请求邮件权限）
 async function get_access_token(refresh_token, client_id) {
   try {
     const response = await fetchWithTimeout(CONFIG.OAUTH_TOKEN_URL, {
@@ -139,7 +117,8 @@ async function get_access_token(refresh_token, client_id) {
       body: new URLSearchParams({
         'client_id': client_id,
         'grant_type': 'refresh_token',
-        'refresh_token': refresh_token
+        'refresh_token': refresh_token,
+        'scope': 'https://graph.microsoft.com/Mail.ReadWrite offline_access'
       }).toString()
     });
 
@@ -149,6 +128,7 @@ async function get_access_token(refresh_token, client_id) {
     }
 
     const data = await response.json();
+    console.log('access_token权限范围：', data.scope);
     return data.access_token;
   } catch (error) {
     throw new Error(`获取access_token失败：${error.message}`);
@@ -161,192 +141,219 @@ const generateAuthString = (user, accessToken) => {
   return Buffer.from(authString).toString('base64');
 };
 
-// 检查Graph API权限
-async function graph_api(refresh_token, client_id) {
+// Graph API：优先查询垃圾箱最新邮件
+async function getJunkLatestEmail(access_token) {
   try {
-    const response = await fetchWithTimeout(CONFIG.OAUTH_TOKEN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        'client_id': client_id,
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token,
-        'scope': 'https://graph.microsoft.com/.default'
-      }).toString()
+    // 先获取所有文件夹，找到垃圾箱ID
+    const foldersRes = await fetchWithTimeout(`${CONFIG.GRAPH_API_BASE_URL}/mailFolders`, {
+      headers: { "Authorization": `Bearer ${access_token}` }
     });
+    if (!foldersRes.ok) throw new Error(`获取文件夹失败：${foldersRes.status}`);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Graph API请求失败：状态码${response.status}，响应：${errorText}`);
+    const foldersData = await foldersRes.json();
+    const junkFolder = foldersData.value.find(folder => 
+      CONFIG.JUNK_FOLDERS.some(alias => 
+        folder.displayName.toLowerCase().includes(alias.toLowerCase())
+      )
+    );
+
+    if (!junkFolder) {
+      console.warn('未找到垃圾箱文件夹，将查询全局邮件');
+      return null;
     }
 
-    const data = await response.json();
-    const hasMailPermission = data.scope?.includes('Mail.Read') || data.scope?.includes('Mail.ReadWrite');
+    console.log(`找到垃圾箱：${junkFolder.displayName}，文件夹ID：${junkFolder.id}`);
+    // 查询垃圾箱最新10封邮件（确保不遗漏）
+    const junkEmailsRes = await fetchWithTimeout(
+      `${CONFIG.GRAPH_API_BASE_URL}/mailFolders/${junkFolder.id}/messages?$top=10&$orderby=receivedDateTime desc`,
+      { headers: { "Authorization": `Bearer ${access_token}` } }
+    );
+    if (!junkEmailsRes.ok) throw new Error(`查询垃圾箱邮件失败：${junkEmailsRes.status}`);
 
-    return {
-      access_token: data.access_token,
-      status: hasMailPermission
-    };
-  } catch (error) {
-    console.error('Graph API权限检查失败：', error);
-    return { access_token: '', status: false };
-  }
-}
-
-// 获取全局最新邮件（Graph API）- 扩大查询范围
-async function getGlobalLatestEmail(access_token) {
-  if (!access_token) {
-    throw new Error("access_token不存在");
-  }
-
-  try {
-    // 查前10封，按接收时间倒序，避免漏查
-    const url = `${CONFIG.GRAPH_API_BASE_URL}/messages?$top=10&$orderby=receivedDateTime desc&$select=from,subject,bodyPreview,body,receivedDateTime,createdDateTime,parentFolderId`;
-    const response = await fetchWithTimeout(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        "Authorization": `Bearer ${access_token}`
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`获取邮件失败：状态码${response.status}，响应：${errorText}`);
-    }
-
-    const responseData = await response.json();
-    const emails = responseData.value || [];
+    const junkEmailsData = await junkEmailsRes.json();
+    const emails = junkEmailsData.value || [];
+    console.log(`垃圾箱邮件总数：${emails.length}`);
 
     if (emails.length === 0) return null;
-
-    // 确保按接收时间取最新（兼容部分邮件createdDateTime异常）
+    // 取最新一封
     const latestEmail = emails.sort((a, b) => new Date(b.receivedDateTime) - new Date(a.receivedDateTime))[0];
-    const folderId = latestEmail.parentFolderId;
-    let folderName = '未知文件夹';
-
-    try {
-      const folderRes = await fetchWithTimeout(`${CONFIG.GRAPH_API_BASE_URL}/mailFolders/${folderId}`, {
-        headers: { "Authorization": `Bearer ${access_token}` }
-      });
-      if (folderRes.ok) {
-        const folderData = await folderRes.json();
-        folderName = getFolderCNName(folderData.displayName) || folderData.displayName;
-      }
-    } catch (e) {
-      console.warn('获取文件夹名称失败：', e);
-    }
-
     return {
       send: latestEmail['from']?.['emailAddress']?.['address'] || latestEmail['from']?.['emailAddress']?.['name'] || '未知发件人',
       subject: latestEmail['subject'] || '无主题',
       text: latestEmail['bodyPreview'] || '',
       html: latestEmail['body']?.['content'] || '',
       date: latestEmail['receivedDateTime'] || latestEmail['createdDateTime'] || new Date().toISOString(),
-      folder: folderName
+      folder: junkFolder.displayName
     };
   } catch (error) {
-    console.error('获取全局最新邮件异常：', error);
+    console.error('Graph API查询垃圾箱失败：', error);
+    return null;
+  }
+}
+
+// 获取全局最新邮件（Graph API）
+async function getGlobalLatestEmail(access_token) {
+  // 优先查询垃圾箱
+  const junkLatestEmail = await getJunkLatestEmail(access_token);
+  if (junkLatestEmail) return junkLatestEmail;
+
+  // 垃圾箱无邮件，查询全局
+  try {
+    const url = `${CONFIG.GRAPH_API_BASE_URL}/messages?$top=10&$orderby=receivedDateTime desc`;
+    const response = await fetchWithTimeout(url, {
+      headers: { "Authorization": `Bearer ${access_token}` }
+    });
+    if (!response.ok) throw new Error(`全局查询失败：${response.status}`);
+
+    const responseData = await response.json();
+    const emails = responseData.value || [];
+    if (emails.length === 0) return null;
+
+    const latestEmail = emails.sort((a, b) => new Date(b.receivedDateTime) - new Date(a.receivedDateTime))[0];
+    return {
+      send: latestEmail['from']?.['emailAddress']?.['address'] || '未知发件人',
+      subject: latestEmail['subject'] || '无主题',
+      text: latestEmail['bodyPreview'] || '',
+      html: latestEmail['body']?.['content'] || '',
+      date: latestEmail['receivedDateTime'] || new Date().toISOString(),
+      folder: '全局最新'
+    };
+  } catch (error) {
+    console.error('全局邮件查询失败：', error);
     throw new Error(`邮件获取异常：${error.message}`);
   }
 }
 
-// IMAP：获取单个文件夹的最新邮件（优化搜索逻辑）
-async function getFolderLatestEmail(imap, folderPath) {
+// IMAP：单独查询垃圾箱最新邮件
+async function getImapJunkLatestEmail(imap) {
   return new Promise((resolve) => {
-    imap.openBox(folderPath, false, (err, box) => { // 只读模式打开，避免修改邮件状态
-      if (err) {
-        console.warn(`无法打开文件夹 ${folderPath}:`, err.message);
+    // 遍历所有垃圾箱别名，尝试打开
+    const tryOpenJunkFolder = async (folderAliases, index = 0) => {
+      if (index >= folderAliases.length) {
+        console.warn('所有垃圾箱别名都无法打开，将遍历所有文件夹');
         return resolve(null);
       }
 
-      console.log(`正在检查文件夹 ${folderPath}，邮件总数：${box.messages.total}`);
+      const folderPath = folderAliases[index];
+      try {
+        // 只读模式打开垃圾箱
+        const box = await new Promise((resolveBox, rejectBox) => {
+          imap.openBox(folderPath, false, (err, box) => err ? rejectBox(err) : resolveBox(box));
+        });
 
-      // 用ALL搜索，兼容性更好，避免UID搜索漏查
-      imap.search(['ALL'], (err, results) => {
-        if (err) {
-          console.warn(`搜索文件夹 ${folderPath} 失败:`, err.message);
-          return resolve(null);
-        }
+        console.log(`成功打开垃圾箱：${folderPath}，邮件总数：${box.messages.total}`);
+        if (box.messages.total === 0) return tryOpenJunkFolder(folderAliases, index + 1);
 
-        if (results.length === 0) {
-          return resolve(null);
-        }
+        // 搜索垃圾箱所有邮件，取最新
+        const results = await new Promise((resolveSearch, rejectSearch) => {
+          imap.search(['ALL'], (err, res) => err ? rejectSearch(err) : resolveSearch(res));
+        });
+        if (results.length === 0) return tryOpenJunkFolder(folderAliases, index + 1);
 
-        // 取最后一封（最新）
         const latestUid = results[results.length - 1];
-        const f = imap.fetch(latestUid, { bodies: 'HEADER.FIELDS (FROM SUBJECT DATE)', struct: true });
+        const f = imap.fetch(latestUid, { bodies: '' });
 
-        f.on("message", async (msg, seqno) => {
+        f.on("message", async (msg) => {
           try {
-            const mail = await simpleParser(msg);
-            const folderCN = getFolderCNName(folderPath);
-
+            const stream = await new Promise(resolveStream => msg.on("body", resolveStream));
+            const mail = await simpleParser(stream);
             resolve({
               send: mail.from?.text || mail.from?.value?.[0]?.address || '未知发件人',
               subject: mail.subject || '无主题',
               text: mail.text || '',
               html: mail.html || '',
               date: new Date(mail.date || Date.now()).toISOString(),
-              folder: folderCN
+              folder: folderPath
             });
           } catch (e) {
-            console.error(`解析文件夹 ${folderPath} 中邮件 ${seqno} 失败:`, e);
-            resolve(null);
+            console.error(`解析垃圾箱邮件失败：`, e);
+            tryOpenJunkFolder(folderAliases, index + 1);
           }
         });
 
         f.on("error", (err) => {
-          console.error(`获取文件夹 ${folderPath} 中邮件失败:`, err);
-          resolve(null);
+          console.error(`获取垃圾箱邮件失败：`, err);
+          tryOpenJunkFolder(folderAliases, index + 1);
         });
-      });
-    });
+      } catch (err) {
+        console.warn(`无法打开垃圾箱 ${folderPath}：`, err.message);
+        tryOpenJunkFolder(folderAliases, index + 1);
+      }
+    };
+
+    // 开始尝试所有垃圾箱别名
+    tryOpenJunkFolder(CONFIG.JUNK_FOLDERS);
   });
 }
 
-// 递归遍历getBoxes返回的嵌套对象，收集所有文件夹路径
-function collectAllFolderPaths(boxes, parentPath = '') {
-  let paths = [];
-  for (const [name, box] of Object.entries(boxes)) {
-    const fullPath = parentPath ? `${parentPath}/${name}` : name;
-    paths.push(fullPath);
-    if (box.children) {
-      paths = paths.concat(collectAllFolderPaths(box.children, fullPath));
-    }
-  }
-  return paths;
-}
-
-// IMAP：获取全局最新邮件（遍历所有文件夹，不限制目标文件夹）
+// IMAP：获取全局最新邮件（优先垃圾箱）
 async function getImapGlobalLatestEmail(imap) {
+  // 优先查询垃圾箱
+  const junkEmail = await getImapJunkLatestEmail(imap);
+  if (junkEmail) return junkEmail;
+
+  // 垃圾箱无邮件，遍历所有文件夹
   return new Promise((resolve, reject) => {
     imap.getBoxes((err, boxes) => {
-      if (err) {
-        return reject(new Error(`获取文件夹列表失败：${err.message}`));
-      }
-      
-      const allFolderPaths = collectAllFolderPaths(boxes);
-      console.log(`发现邮箱文件夹总数：${allFolderPaths.length}，分别是：`, allFolderPaths);
+      if (err) return reject(new Error(`获取文件夹列表失败：${err.message}`));
 
-      // 遍历所有文件夹（不筛选，避免漏查）
-      Promise.all(allFolderPaths.map(folder => getFolderLatestEmail(imap, folder)))
-        .then(folderEmails => {
-          const validEmails = folderEmails.filter(Boolean);
-          console.log(`从所有文件夹中找到有效邮件数：${validEmails.length}`);
+      const collectPaths = (boxes, parent = '') => {
+        let paths = [];
+        for (const [name, box] of Object.entries(boxes)) {
+          const path = parent ? `${parent}/${name}` : name;
+          paths.push(path);
+          if (box.children) paths = paths.concat(collectPaths(box.children, path));
+        }
+        return paths;
+      };
 
-          if (validEmails.length === 0) return resolve(null);
+      const allPaths = collectPaths(boxes);
+      console.log(`遍历所有文件夹（共${allPaths.length}个）`);
 
-          // 按日期排序，取最新
-          const globalLatest = validEmails.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-          resolve(globalLatest);
-        })
-        .catch(err => {
-          console.error('获取文件夹邮件时发生错误：', err);
-          resolve(null);
+      Promise.all(allPaths.map(path => new Promise((res) => {
+        imap.openBox(path, false, (err, box) => {
+          if (err) return res(null);
+          imap.search(['ALL'], (err, results) => {
+            if (err || results.length === 0) return res(null);
+            const latestUid = results[results.length - 1];
+            imap.fetch(latestUid, { bodies: '' }).on("message", async (msg) => {
+              const stream = await new Promise(rs => msg.on("body", rs));
+              const mail = await simpleParser(stream);
+              res({ ...mail, folder: path, date: new Date(mail.date).toISOString() });
+            });
+          });
         });
+      })))
+        .then(emails => {
+          const validEmails = emails.filter(Boolean);
+          if (validEmails.length === 0) return resolve(null);
+          const latest = validEmails.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+          resolve({
+            send: latest.from?.text || '未知发件人',
+            subject: latest.subject || '无主题',
+            text: latest.text || '',
+            html: latest.html || '',
+            date: latest.date,
+            folder: latest.folder
+          });
+        })
+        .catch(err => resolve(null));
     });
   });
+}
+
+// 检查Graph API权限
+async function graph_api(refresh_token, client_id) {
+  try {
+    const token = await get_access_token(refresh_token, client_id);
+    const res = await fetchWithTimeout(`${CONFIG.GRAPH_API_BASE_URL}/mailFolders`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    return { access_token: token, status: res.ok };
+  } catch (error) {
+    console.error('Graph API权限检查失败：', error);
+    return { access_token: '', status: false };
+  }
 }
 
 // ===================== 主入口函数 =====================
@@ -389,50 +396,43 @@ module.exports = async (req, res) => {
       });
     }
 
-    if (params.mailbox) {
-      console.warn(`已忽略mailbox参数：${params.mailbox}，将返回全局最新邮件`);
-    }
-
     console.log("【开始】检查Graph API权限");
     const graph_api_result = await graph_api(refresh_token, client_id);
 
     if (graph_api_result.status) {
-      console.log("【成功】Graph API权限通过，获取全局最新邮件");
+      console.log("【成功】Graph API权限通过，优先查询垃圾箱");
       const emailData = await getGlobalLatestEmail(graph_api_result.access_token);
       if (!emailData) {
-        console.log("Graph API未找到任何邮件");
         return res.status(200).json({ code: 2001, message: "邮箱无任何邮件", data: null });
       }
       if (response_type === 'html') {
         return res.status(200).send(generateEmailHtml(emailData));
       } else {
-        return res.status(200).json({ code: 200, message: '全局最新邮件获取成功', data: emailData });
+        return res.status(200).json({ code: 200, message: '垃圾箱最新邮件获取成功', data: emailData });
       }
     }
 
-    console.log("【降级】Graph API权限不足或失败，使用IMAP获取全局最新邮件");
+    console.log("【降级】Graph API权限不足，使用IMAP优先查询垃圾箱");
     const access_token = await get_access_token(refresh_token, client_id);
     const authString = generateAuthString(email, access_token);
     const imap = new Imap({ ...CONFIG.IMAP_CONFIG, user: email, xoauth2: authString });
 
     imap.once("ready", async () => {
       try {
-        console.log("IMAP连接成功，开始遍历所有文件夹");
         const emailData = await getImapGlobalLatestEmail(imap);
         imap.end();
 
         if (!emailData) {
-          console.log("IMAP遍历所有文件夹后未找到任何邮件");
           return res.status(200).json({ code: 2001, message: "邮箱无任何邮件", data: null });
         }
         if (response_type === 'html') {
           res.status(200).send(generateEmailHtml(emailData));
         } else {
-          res.status(200).json({ code: 200, message: '全局最新邮件获取成功', data: emailData });
+          res.status(200).json({ code: 200, message: '垃圾箱最新邮件获取成功', data: emailData });
         }
       } catch (err) {
         imap.end();
-        console.error('IMAP获取全局最新邮件失败：', err);
+        console.error('IMAP操作失败：', err);
         res.status(500).json({ code: 5002, error: `IMAP操作失败：${err.message}` });
       }
     });
@@ -442,18 +442,15 @@ module.exports = async (req, res) => {
       res.status(500).json({ code: 5001, error: `IMAP连接失败：${err.message}` });
     });
 
-    imap.once('end', () => {
-      console.log('IMAP连接已关闭');
-    });
-
+    imap.once('end', () => console.log('IMAP连接已关闭'));
     imap.connect();
 
   } catch (error) {
     let statusCode = 500;
     let errorCode = 5000;
-    if (error.message.includes('HTTP错误！状态码：401')) {
+    if (error.message.includes('401')) {
       statusCode = 401; errorCode = 4011; error.message = '认证失效，请刷新refresh_token';
-    } else if (error.message.includes('HTTP错误！状态码：403')) {
+    } else if (error.message.includes('403')) {
       statusCode = 403; errorCode = 4031; error.message = '权限不足，需开启Mail.Read权限';
     } else if (error.message.includes('请求超时')) {
       statusCode = 504; errorCode = 5041;
