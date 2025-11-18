@@ -1,109 +1,892 @@
 <!DOCTYPE html>
-<html lang="en-US" dir="ltr">
-  <head>
+<html lang="zh-CN">
+<head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>微软邮箱令牌取件管理系统-小黑</title>
-    <meta name="description" content="简化批量取件操作流程">
-    <meta name="generator" content="VitePress v1.5.0">
-    <link rel="preload stylesheet" href="/assets/style.BiZM73yO.css" as="style">
-    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微软邮箱长效令牌取件管理系统api调用教程-小黑</title>
+    <meta name="description" content="简化批量取件操作流程，提供高效邮箱API服务">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     
-    <script type="module" src="/assets/app.DNy3C-pr.js"></script>
-    <link rel="preload" href="/assets/inter-roman-latin.Di8DUHzh.woff2" as="font" type="font/woff2" crossorigin="">
-    <link rel="modulepreload" href="/assets/chunks/theme.FZ7t4Rzd.js">
-    <link rel="modulepreload" href="/assets/chunks/framework.P9qPzDnn.js">
-    <link rel="modulepreload" href="/assets/api.md.dLrLKOxz.lean.js">
-    <link rel="icon" href="/unix.png">
-    <script>console.log("%c\u611F\u8C22\u60A8\u4F7F\u7528\u672C\u9879\u76EE\uFF01","color: #666; font-size: 11px; margin-top: 5px; margin-bottom: 5px;"),console.log("%c\u4F5C\u8005: HChaohui","color: #007BFF; font-size: 12px; font-weight: bold; margin-bottom: 5px;"),console.log("%c\u5F00\u6E90\u5730\u5740: %https://xiaoheifk.cn/","color: #007BFF; font-size: 12px; font-weight: bold;","color: #007BFF; font-size: 12px; text-decoration: underline; cursor: pointer;"),console.log("%c\u5982\u9700\u4F7F\u7528\u6216\u4FEE\u6539\u672C\u9879\u76EE\uFF0C\u8BF7\u4FDD\u7559\u4F5C\u8005\u4FE1\u606F\u3002\u611F\u8C22\u60A8\u7684\u7406\u89E3\u548C\u652F\u6301\uFF01","color: #666; font-size: 11px; margin-top: 5px; margin-bottom: 5px;");</script>
-    <script id="check-dark-mode">(()=>{const e=localStorage.getItem("vitepress-theme-appearance")||"auto",a=window.matchMedia("(prefers-color-scheme: dark)").matches;(!e||e==="auto"?a:e==="dark")&&document.documentElement.classList.add("dark")})();</script>
-    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
-  </head>
-  <body>
-    <div id="app"><div class="Layout" data-v-d8b57b2d><!--[--><!--]--><!--[--><span tabindex="-1" data-v-c8291ffa></span><a href="#VPContent" class="VPSkipLink visually-hidden" data-v-c8291ffa> Skip to content </a><!--]--><!----><header class="VPNav" data-v-d8b57b2d data-v-7ad780c2><div class="VPNavBar" data-v-7ad780c2 data-v-9fd4d1dd><div class="wrapper" data-v-9fd4d1dd><div class="container" data-v-9fd4d1dd><div class="title" data-v-9fd4d1dd>
-          <!-- 此处为修改后的标题链接（禁用跳转） -->
-          <div class="VPNavBarTitle has-sidebar" data-v-9fd4d1dd data-v-9f43907a>
-            <a class="title" href="javascript:void(0);" onclick="return false;" data-v-9f43907a>
-              <!--[--><!--]--><!----><span data-v-9f43907a>微软邮箱取件管理系统-小黑QQ113575320
-Main Navigation
-</span><!--[--><!--]-->
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1E1E1E;
+            --text-primary: #E0E0E0;
+            --text-secondary: #9E9E9E;
+            --color-primary: #165DFF;
+            --color-secondary: #36CFFB;
+            --border-gray: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark) !important;
+            color: var(--text-primary) !important;
+            line-height: 1.6;
+            padding-bottom: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-gray);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 15px 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: var(--color-secondary);
+            font-size: 24px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .logo span {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 25px;
+            list-style: none;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        nav a:hover {
+            color: var(--color-primary);
+        }
+
+        /* Main Content */
+        main {
+            padding: 40px 0;
+        }
+
+        .purchase-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .purchase-btn {
+            display: inline-block;
+            background-color: var(--color-primary);
+            color: white !important;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(22, 93, 255, 0.3);
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .purchase-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 93, 255, 0.4);
+        }
+
+        .purchase-section p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .api-docs {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 30px 40px;
+        }
+
+        .api-card {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .api-card:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .api-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .api-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(22, 93, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .api-icon i {
+            color: var(--color-secondary);
+            font-size: 18px;
+        }
+
+        .api-header h2 {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .api-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .meta-item {
+            background-color: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .meta-item span {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .meta-item p {
+            font-weight: 500;
+            color: white;
+        }
+
+        .meta-item p.url {
+            color: var(--color-primary);
+            font-family: 'Fira Code', monospace;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-gray);
+        }
+
+        th {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        td.param {
+            font-family: 'Fira Code', monospace;
+            color: white;
+        }
+
+        td.required {
+            color: #ff6b6b;
+            font-weight: 500;
+        }
+
+        .code-example {
+            background-color: #111111;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .code-header {
+            background-color: var(--bg-card);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .code-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            color: var(--color-secondary);
+        }
+
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            color: #d4d4d4;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border-gray);
+            padding: 40px 0;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-logo i {
+            color: var(--color-secondary);
+            font-size: 24px;
+        }
+
+        .footer-logo h3 {
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .footer-logo p {
+            color: var(--text-secondary);
+        }
+
+        .footer-info {
+            text-align: right;
+        }
+
+        .footer-info p {
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .footer-info a {
+            color: var(--color-secondary);
+            text-decoration: none;
+        }
+
+        .footer-info a:hover {
+            text-decoration: underline;
+        }
+
+        .copyright {
+            margin-top: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Back to top button */
+        #backToTop {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(22, 93, 255, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        #backToTop:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(22, 93, 255, 0.4);
+        }
+
+        #backToTop.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .api-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .api-meta {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-info {
+                text-align: center;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-envelope-open"></i>
+                <div>
+                    <h1>微软邮箱长效令牌取件管理系统api调用教程</h1>
+                    <span>小黑 QQ113575320</span>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#api"><i class="fas fa-code"></i> API文档</a></li>
+                    <!-- 已移除示例图片链接 -->
+                    <li><a href="/about.html"><i class="fas fa-info-circle"></i> 关于</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="purchase-section">
+            <a href="https://xiaoheifk.cn" target="_blank" rel="noopener" class="purchase-btn">
+                <i class="fas fa-shopping-cart"></i> 点我购买微软长效邮箱和使用在线取件系统
             </a>
-          </div>
-        </div><div class="content" data-v-9fd4d1dd><div class="content-body" data-v-9fd4d1dd><!--[--><!--]--><div class="VPNavBarSearch search" data-v-9fd4d1dd><!----></div><nav aria-labelledby="main-nav-aria-label" class="VPNavBarMenu menu" data-v-9fd4d1dd data-v-afb2845e><span id="main-nav-aria-label" class="visually-hidden" data-v-afb2845e> Main Navigation </span><!--[--><!--[--><a class="VPLink link VPNavBarMenuLink active" href="/api.html" tabindex="0" data-v-afb2845e data-v-815115f5><!--[--><span data-v-815115f5>API</span><!--]--></a><!--]--><!--[--><a class="VPLink link VPNavBarMenuLink" href="/image.html" tabindex="0" data-v-afb2845e data-v-815115f5><!--[--><span data-v-815115f5>示例图片</span><!--]--></a><!--]--><!--[--><a class="VPLink link VPNavBarMenuLink" href="/about.html" tabindex="0" data-v-afb2845e data-v-815115f5><!--[--><span data-v-815115f5>关于</span><!--]--></a><!--]--><!--]--></nav><!----><div class="VPNavBarAppearance appearance" data-v-9fd4d1dd data-v-3f90c1a5><button class="VPSwitch VPSwitchAppearance" type="button" role="switch" title aria-checked="false" data-v-3f90c1a5 data-v-be9742d9 data-v-b4ccac88><span class="check" data-v-b4ccac88><span class="icon" data-v-b4ccac88><!--[--><span class="vpi-sun sun" data-v-be9742d9></span><span class="vpi-moon moon" data-v-be9742d9></span><!--]--></span></span></button></div><div class="VPSocialLinks VPNavBarSocialLinks social-links" data-v-9fd4d1dd data-v-ef6192dc data-v-e71e869c><!--[--><a class="VPSocialLink no-icon" href="https://xiaoheifk.cn/" aria-label="点我进入微软长效邮箱自动发卡批发网" target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><span class="vpi-social-github"></span></a><a class="VPSocialLink no-icon" href="https://unix.xin" aria-label target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><img src="/unix.png" width="20" height="20" /></a><!--]--></div><div class="VPFlyout VPNavBarExtra extra" data-v-9fd4d1dd data-v-f953d92f data-v-bfe7971f><button type="button" class="button" aria-haspopup="true" aria-expanded="false" aria-label="extra navigation" data-v-bfe7971f><span class="vpi-more-horizontal icon" data-v-bfe7971f></span></button><div class="menu" data-v-bfe7971f><div class="VPMenu" data-v-bfe7971f data-v-20ed86d6><!----><!--[--><!--[--><!----><div class="group" data-v-f953d92f><div class="item appearance" data-v-f953d92f><p class="label" data-v-f953d92f>Appearance</p><div class="appearance-action" data-v-f953d92f><button class="VPSwitch VPSwitchAppearance" type="button" role="switch" title aria-checked="false" data-v-f953d92f data-v-be9742d9 data-v-b4ccac88><span class="check" data-v-b4ccac88><span class="icon" data-v-b4ccac88><!--[--><span class="vpi-sun sun" data-v-be9742d9></span><span class="vpi-moon moon" data-v-be9742d9></span><!--]--></span></span></button></div></div></div><div class="group" data-v-f953d92f><div class="item social-links" data-v-f953d92f><div class="VPSocialLinks social-links-list" data-v-f953d92f data-v-e71e869c><!--[--><a class="VPSocialLink no-icon" href="https://xiaoheifk.cn/mail.html" aria-label="微软邮箱令牌取件在线批量管理系统" target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><span class="vpi-social-github"></span></a><a class="VPSocialLink no-icon" href="https://www.qianxun1688.com/links/1CDFE3FC" aria-label target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><img src="/unix.png" width="20" height="20" /></a><!--]--></div></div></div><!--]--><!--]--></div></div></div><!--[--><!--]--><button type="button" class="VPNavBarHamburger hamburger" aria-label="mobile navigation" aria-expanded="false" aria-controls="VPNavScreen" data-v-9fd4d1dd data-v-6bee1efd><span class="container" data-v-6bee1efd><span class="top" data-v-6bee1efd></span><span class="middle" data-v-6bee1efd></span><span class="bottom" data-v-6bee1efd></span></span></button></div></div></div></div><div class="divider" data-v-9fd4d1dd><div class="divider-line" data-v-9fd4d1dd></div></div></div><!----></header><div class="VPLocalNav has-sidebar empty" data-v-d8b57b2d data-v-2488c25a><div class="container" data-v-2488c25a><button class="menu" aria-expanded="false" aria-controls="VPSidebarNav" data-v-2488c25a><span class="vpi-align-left menu-icon" data-v-2488c25a></span><span class="menu-text" data-v-2488c25a>Menu</span></button><div class="VPLocalNavOutlineDropdown" style="--vp-vh:0px;" data-v-2488c25a data-v-883964e0><button data-v-883964e0>Return to top</button><!----></div></div></div><aside class="VPSidebar" data-v-d8b57b2d data-v-42c4c606><div class="curtain" data-v-42c4c606></div><nav class="nav" id="VPSidebarNav" aria-labelledby="sidebar-aria-label" tabindex="-1" data-v-42c4c606><span class="visually-hidden" id="sidebar-aria-label" data-v-42c4c606> Sidebar Navigation </span><!--[--><!--]--><!--[--><div class="no-transition group" data-v-51288d80><section class="VPSidebarItem level-0 has-active" data-v-51288d80 data-v-edd2eed8><div class="item" role="button" tabindex="0" data-v-edd2eed8><div class="indicator" data-v-edd2eed8></div><h2 class="text" data-v-edd2eed8>使用文档</h2><!----></div><div class="items" data-v-edd2eed8><!--[--><div class="VPSidebarItem level-1 is-link" data-v-edd2eed8 data-v-edd2eed8><div class="item" data-v-edd2eed8><div class="indicator" data-v-edd2eed8></div><a class="VPLink link link" href="/api.html" data-v-edd2eed8><!--[--><p class="text" data-v-edd2eed8>API</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-edd2eed8 data-v-edd2eed8><div class="item" data-v-edd2eed8><div class="indicator" data-v-edd2eed8></div><a class="VPLink link link" href="/image.html" data-v-edd2eed8><!--[--><p class="text" data-v-edd2eed8>示例图片</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-edd2eed8 data-v-edd2eed8><div class="item" data-v-edd2eed8><div class="indicator" data-v-edd2eed8></div><a class="VPLink link link" href="/about.html" data-v-edd2eed8><!--[--><p class="text" data-v-edd2eed8>关于</p><!--]--></a><!----></div><!----></div><!--]--></div></section></div><!--]--><!--[--><!--]--></nav></aside><div class="VPContent has-sidebar" id="VPContent" data-v-d8b57b2d data-v-9a6c75ad><div class="VPDoc has-sidebar has-aside" data-v-9a6c75ad data-v-e6f2a212><!--[--><!--]--><div class="container" data-v-e6f2a212><div class="aside" data-v-e6f2a212><div class="aside-curtain" data-v-e6f2a212></div><div class="aside-container" data-v-e6f2a212><div class="aside-content" data-v-e6f2a212><div class="VPDocAside" data-v-e6f2a212 data-v-cb998dce><!--[--><!--]--><!--[--><!--]--><nav aria-labelledby="doc-outline-aria-label" class="VPDocAsideOutline" data-v-cb998dce data-v-f610f197><div class="content" data-v-f610f197><div class="outline-marker" data-v-f610f197></div><div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading" data-v-f610f197>On this page</div><ul class="VPDocOutlineItem root" data-v-f610f197 data-v-53c99d69><!--[--><!--]--></ul></div></nav><!--[--><!--]--><div class="spacer" data-v-cb998dce></div><!--[--><!--]--><!----><!--[--><!--]--><!--[--><!--]--></div></div></div></div><div class="content" data-v-e6f2a212><div class="content-container" data-v-e6f2a212><!--[--><!--]--><main class="main" data-v-e6f2a212><div style="position:relative;" class="vp-doc _api" data-v-e6f2a212><div><h2 id="📨-获取最新一封邮件" tabindex="-1">📨 <strong>获取最新一封邮件</strong> <a class="header-anchor" href="#📨-获取最新一封邮件" aria-label="Permalink to &quot;📨 **获取最新一封邮件**&quot;">​</a></h2><p><strong>方法:</strong> <code>GET</code> 或 <code>POST</code><br><strong>URL:</strong> <code>/api/mail-new</code><br><strong>描述:</strong> 获取最新的一封邮件。如果邮件中含有 6 位数字验证码，会自动提取。</p><p><strong>参数说明:</strong></p><ul><li><code>refresh_token</code> (必填): 用于身份验证的 refresh_token。</li><li><code>client_id</code> (必填): 客户端 ID。</li><li><code>email</code> (必填): 邮箱地址。</li><li><code>mailbox</code> (必填): 邮箱文件夹，支持的值为 <code>INBOX</code> 或 <code>Junk</code>。</li><li><code>response_type</code> (可选): 返回格式，支持的值为 <code>json</code> 或 <code>html</code>，默认为 <code>json</code>。</li><li><code>password</code> (可选): 为增强接口安全性，防止滥用，现已支持密码验证功能。您可以通过在环境变量中配置 password 来启用此功能。启用后，请求时需提供正确的 password 参数方可访问。</li></ul><p><strong>使用示例:</strong></p><p><strong>JavaScript (Fetch API):</strong></p><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// GET 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/mail-new?refresh_token=your_refresh_token&amp;client_id=your_client_id&amp;email=your_email@example.com&amp;mailbox=INBOX&amp;response_type=json&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">)</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">response</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> response.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">json</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">())</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">data</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(data))</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">error</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;Error:&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, error));</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// POST 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/mail-new&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, {</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  method: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;POST&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  headers: {</span></span>
-<span class="line"><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">    &#39;Content-Type&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;application/json&#39;</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  },</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  body: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">JSON</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">stringify</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">({</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    refresh_token: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_refresh_token&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    client_id: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_client_id&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    email: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_email@example.com&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    mailbox: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;INBOX&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    response_type: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;json&#39;</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  })</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">})</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">response</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> response.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">json</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">())</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">data</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(data))</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">error</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;Error:&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, error));</span></span></code></pre></div><hr><h2 id="📂-获取全部邮件" tabindex="-1">📂 <strong>获取全部邮件</strong> <a class="header-anchor" href="#📂-获取全部邮件" aria-label="Permalink to &quot;📂 **获取全部邮件**&quot;">​</a></h2><p><strong>方法:</strong> <code>GET</code> 或 <code>POST</code><br><strong>URL:</strong> <code>/api/mail-all</code><br><strong>描述:</strong> 获取全部邮件。如果邮件中含有 6 位数字验证码，会自动提取。</p><p><strong>参数说明:</strong></p><ul><li><code>refresh_token</code> (必填): 用于身份验证的 refresh_token。</li><li><code>client_id</code> (必填): 客户端 ID。</li><li><code>email</code> (必填): 邮箱地址。</li><li><code>mailbox</code> (必填): 邮箱文件夹，支持的值为 <code>INBOX</code> 或 <code>Junk</code>。</li><li><code>password</code> (可选): 为增强接口安全性，防止滥用，现已支持密码验证功能。您可以通过在环境变量中配置 password 来启用此功能。启用后，请求时需提供正确的 password 参数方可访问。</li></ul><p><strong>使用示例:</strong></p><p><strong>JavaScript (Fetch API):</strong></p><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// GET 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/mail-all?refresh_token=your_refresh_token&amp;client_id=your_client_id&amp;email=your_email@example.com&amp;mailbox=INBOX&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">)</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">response</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> response.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">json</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">())</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">data</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(data))</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">error</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;Error:&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, error));</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// POST 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/mail-all&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, {</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  method: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;POST&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  headers: {</span></span>
-<span class="line"><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">    &#39;Content-Type&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;application/json&#39;</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  },</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  body: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">JSON</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">stringify</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">({</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    refresh_token: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_refresh_token&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    client_id: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_client_id&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    email: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_email@example.com&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    mailbox: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;INBOX&#39;</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  })</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">})</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">response</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> response.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">json</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">())</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">data</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(data))</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">error</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;Error:&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, error));</span></span></code></pre></div><hr><h2 id="🗑️-清空收件箱" tabindex="-1">🗑️ <strong>清空收件箱</strong> <a class="header-anchor" href="#🗑️-清空收件箱" aria-label="Permalink to &quot;🗑️ **清空收件箱**&quot;">​</a></h2><p><strong>方法:</strong> <code>GET</code> 或 <code>POST</code><br><strong>URL:</strong> <code>/api/process-inbox</code><br><strong>描述:</strong> 清空收件箱。</p><p><strong>参数说明:</strong></p><ul><li><code>refresh_token</code> (必填): 用于身份验证的 refresh_token。</li><li><code>client_id</code> (必填): 客户端 ID。</li><li><code>email</code> (必填): 邮箱地址。</li><li><code>password</code> (可选): 为增强接口安全性，防止滥用，现已支持密码验证功能。您可以通过在环境变量中配置 password 来启用此功能。启用后，请求时需提供正确的 password 参数方可访问。</li></ul><p><strong>使用示例:</strong></p><p><strong>JavaScript (Fetch API):</strong></p><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// GET 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/process-inbox?refresh_token=your_refresh_token&amp;client_id=your_client_id&amp;email=your_email@example.com&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">)</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">response</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> response.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">json</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">())</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">data</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(data))</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">error</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;Error:&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, error));</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// POST 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/process-inbox&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, {</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  method: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;POST&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  headers: {</span></span>
-<span class="line"><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">    &#39;Content-Type&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;application/json&#39;</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  },</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  body: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">JSON</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">stringify</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">({</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    refresh_token: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_refresh_token&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    client_id: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_client_id&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    email: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;your_email@example.com&#39;</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  })</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">})</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">response</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> response.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">json</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">())</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">data</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(data))</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">error</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;Error:&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, error));</span></span></code></pre></div><hr><h2 id="🗑️-清空垃圾箱" tabindex="-1">🗑️ <strong>清空垃圾箱</strong> <a class="header-anchor" href="#🗑️-清空垃圾箱" aria-label="Permalink to &quot;🗑️ **清空垃圾箱**&quot;">​</a></h2><p><strong>方法:</strong> <code>GET</code> 或 <code>POST</code><br><strong>URL:</strong> <code>/api/process-junk</code><br><strong>描述:</strong> 清空垃圾箱。</p><p><strong>参数说明:</strong></p><ul><li><code>refresh_token</code> (必填): 用于身份验证的 refresh_token。</li><li><code>client_id</code> (必填): 客户端 ID。</li><li><code>email</code> (必填): 邮箱地址。</li><li><code>password</code> (可选): 为增强接口安全性，防止滥用，现已支持密码验证功能。您可以通过在环境变量中配置 password 来启用此功能。启用后，请求时需提供正确的 password 参数方可访问。</li></ul><p><strong>使用示例:</strong></p><p><strong>JavaScript (Fetch API):</strong></p><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// GET 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/process-junk?refresh_token=your_refresh_token&amp;client_id=your_client_id&amp;email=your_email@example.com&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">)</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">response</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> response.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">json</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">())</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">data</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(data))</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  .</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#FFAB70;">error</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;Error:&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, error));</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// POST 请求</span></span>
-<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0;">fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;https://yourdomain.com/api/process-junk&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">, {</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  method: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;POST&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">,</span></span>
-<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  headers: {</span></span>
-<span class="line"><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">    &#39;Content-Type&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&#39;application/json&#39;</span></span>
-</code></pre></div>
-</div></div></main><!--[--><!--]--></div></div></div></div></div></div>
-  </body>
+            <p>官方授权，稳定可靠，支持批量管理快捷取邮件</p>
+        </section>
+
+        <section id="api" class="api-docs">
+            <!-- API 1: 获取最新一封邮件 -->
+            <div class="api-card">
+                <div class="api-header">
+                    <div class="api-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h2>获取最新一封邮件</h2>
+                </div>
+                <div class="api-meta">
+                    <div class="meta-item">
+                        <span>请求方法</span>
+                        <p>GET / POST</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>接口URL</span>
+                        <p class="url">/api/mail-new</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>核心功能</span>
+                        <p>获取最新邮件+自动提取6位验证码</p>
+                    </div>
+                </div>
+                <h3>参数说明</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>是否必填</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param">refresh_token</td>
+                            <td class="required">必填</td>
+                            <td>用于身份验证的 refresh_token</td>
+                        </tr>
+                        <tr>
+                            <td class="param">client_id</td>
+                            <td class="required">必填</td>
+                            <td>客户端 ID</td>
+                        </tr>
+                        <tr>
+                            <td class="param">email</td>
+                            <td class="required">必填</td>
+                            <td>邮箱地址</td>
+                        </tr>
+                        <tr>
+                            <td class="param">mailbox</td>
+                            <td class="required">必填</td>
+                            <td>邮箱文件夹（INBOX / Junk）</td>
+                        </tr>
+                        <tr>
+                            <td class="param">response_type</td>
+                            <td>可选</td>
+                            <td>返回格式（json / html，默认 json）</td>
+                        </tr>
+                        <tr>
+                            <td class="param">password</td>
+                            <td>可选</td>
+                            <td>接口安全验证密码（需提前配置）</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>使用示例</h3>
+                <div class="code-example">
+                    <div class="code-header">
+                        <p>JavaScript (Fetch API)</p>
+                        <button class="copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> 复制代码</button>
+                    </div>
+                    <pre><code>// GET 请求
+fetch('https://yourdomain.com/api/mail-new?refresh_token=your_refresh_token&client_id=your_client_id&email=your_email@example.com&mailbox=INBOX&response_type=json')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+
+// POST 请求
+fetch('https://yourdomain.com/api/mail-new', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    refresh_token: 'your_refresh_token',
+    client_id: 'your_client_id',
+    email: 'your_email@example.com',
+    mailbox: 'INBOX',
+    response_type: 'json'
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</code></pre>
+                </div>
+            </div>
+
+            <!-- API 2: 获取全部邮件 -->
+            <div class="api-card">
+                <div class="api-header">
+                    <div class="api-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h2>获取全部邮件</h2>
+                </div>
+                <div class="api-meta">
+                    <div class="meta-item">
+                        <span>请求方法</span>
+                        <p>GET / POST</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>接口URL</span>
+                        <p class="url">/api/mail-all</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>核心功能</span>
+                        <p>获取全部邮件+自动提取6位验证码</p>
+                    </div>
+                </div>
+                <h3>参数说明</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>是否必填</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param">refresh_token</td>
+                            <td class="required">必填</td>
+                            <td>用于身份验证的 refresh_token</td>
+                        </tr>
+                        <tr>
+                            <td class="param">client_id</td>
+                            <td class="required">必填</td>
+                            <td>客户端 ID</td>
+                        </tr>
+                        <tr>
+                            <td class="param">email</td>
+                            <td class="required">必填</td>
+                            <td>邮箱地址</td>
+                        </tr>
+                        <tr>
+                            <td class="param">mailbox</td>
+                            <td class="required">必填</td>
+                            <td>邮箱文件夹（INBOX / Junk）</td>
+                        </tr>
+                        <tr>
+                            <td class="param">password</td>
+                            <td>可选</td>
+                            <td>接口安全验证密码（需提前配置）</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>使用示例</h3>
+                <div class="code-example">
+                    <div class="code-header">
+                        <p>JavaScript (Fetch API)</p>
+                        <button class="copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> 复制代码</button>
+                    </div>
+                    <pre><code>// GET 请求
+fetch('https://yourdomain.com/api/mail-all?refresh_token=your_refresh_token&client_id=your_client_id&email=your_email@example.com&mailbox=INBOX')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+
+// POST 请求
+fetch('https://yourdomain.com/api/mail-all', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    refresh_token: 'your_refresh_token',
+    client_id: 'your_client_id',
+    email: 'your_email@example.com',
+    mailbox: 'INBOX'
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</code></pre>
+                </div>
+            </div>
+
+            <!-- API 3: 清空收件箱 -->
+            <div class="api-card">
+                <div class="api-header">
+                    <div class="api-icon">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <h2>清空收件箱</h2>
+                </div>
+                <div class="api-meta">
+                    <div class="meta-item">
+                        <span>请求方法</span>
+                        <p>GET / POST</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>接口URL</span>
+                        <p class="url">/api/process-inbox</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>核心功能</span>
+                        <p>一键清空收件箱所有邮件</p>
+                    </div>
+                </div>
+                <h3>参数说明</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>是否必填</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param">refresh_token</td>
+                            <td class="required">必填</td>
+                            <td>用于身份验证的 refresh_token</td>
+                        </tr>
+                        <tr>
+                            <td class="param">client_id</td>
+                            <td class="required">必填</td>
+                            <td>客户端 ID</td>
+                        </tr>
+                        <tr>
+                            <td class="param">email</td>
+                            <td class="required">必填</td>
+                            <td>邮箱地址</td>
+                        </tr>
+                        <tr>
+                            <td class="param">password</td>
+                            <td>可选</td>
+                            <td>接口安全验证密码（需提前配置）</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>使用示例</h3>
+                <div class="code-example">
+                    <div class="code-header">
+                        <p>JavaScript (Fetch API)</p>
+                        <button class="copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> 复制代码</button>
+                    </div>
+                    <pre><code>// GET 请求
+fetch('https://yourdomain.com/api/process-inbox?refresh_token=your_refresh_token&client_id=your_client_id&email=your_email@example.com')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+
+// POST 请求
+fetch('https://yourdomain.com/api/process-inbox', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    refresh_token: 'your_refresh_token',
+    client_id: 'your_client_id',
+    email: 'your_email@example.com'
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</code></pre>
+                </div>
+            </div>
+
+            <!-- API 4: 清空垃圾箱 -->
+            <div class="api-card">
+                <div class="api-header">
+                    <div class="api-icon">
+                        <i class="fas fa-recycle"></i>
+                    </div>
+                    <h2>清空垃圾箱</h2>
+                </div>
+                <div class="api-meta">
+                    <div class="meta-item">
+                        <span>请求方法</span>
+                        <p>GET / POST</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>接口URL</span>
+                        <p class="url">/api/process-junk</p>
+                    </div>
+                    <div class="meta-item">
+                        <span>核心功能</span>
+                        <p>一键清空垃圾箱所有邮件</p>
+                    </div>
+                </div>
+                <h3>参数说明</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>是否必填</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param">refresh_token</td>
+                            <td class="required">必填</td>
+                            <td>用于身份验证的 refresh_token</td>
+                        </tr>
+                        <tr>
+                            <td class="param">client_id</td>
+                            <td class="required">必填</td>
+                            <td>客户端 ID</td>
+                        </tr>
+                        <tr>
+                            <td class="param">email</td>
+                            <td class="required">必填</td>
+                            <td>邮箱地址</td>
+                        </tr>
+                        <tr>
+                            <td class="param">password</td>
+                            <td>可选</td>
+                            <td>接口安全验证密码（需提前配置）</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>使用示例</h3>
+                <div class="code-example">
+                    <div class="code-header">
+                        <p>JavaScript (Fetch API)</p>
+                        <button class="copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> 复制代码</button>
+                    </div>
+                    <pre><code>// GET 请求
+fetch('https://yourdomain.com/api/process-junk?refresh_token=your_refresh_token&client_id=your_client_id&email=your_email@example.com')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+
+// POST 请求
+fetch('https://yourdomain.com/api/process-junk', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    refresh_token: 'your_refresh_token',
+    client_id: 'your_client_id',
+    email: 'your_email@example.com'
+  })
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</code></pre>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-envelope-open"></i>
+                <div>
+                    <h3>微软邮箱取件管理系统</h3>
+                    <p>简化批量取件操作流程，提升工作效率</p>
+                </div>
+            </div>
+            <div class="footer-info">
+                <!-- 已移除作者信息 -->
+                <p>小黑QQ: 113575320</p>
+                <a href="https://xiaoheifk.cn/" target="_blank" rel="noopener">在线取件地址: https://xiaoheifk.cn/</a>
+            </div>
+        </div>
+        <div class="copyright">
+            <div class="container">
+                © 2025 保留所有权利-技术支持：113575320
+            </div>
+        </div>
+    </footer>
+
+    <button id="backToTop" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Back to top button
+        const backToTopBtn = document.getElementById('backToTop');
+        
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
+        });
+        
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId !== '#') {
+                    document.querySelector(targetId).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Copy code functionality
+        function copyCode(button) {
+            const preElement = button.parentElement.nextElementSibling;
+            const codeElement = preElement.querySelector('code');
+            const textToCopy = codeElement.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalIcon = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                button.style.color = '#4CAF50';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.style.color = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                button.innerHTML = '<i class="fas fa-times"></i> 复制失败';
+                button.style.color = '#ff6b6b';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.style.color = '';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
 </html>
